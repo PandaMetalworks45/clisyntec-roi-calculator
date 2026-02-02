@@ -90,3 +90,11 @@ st.table(pd.DataFrame(comparison_data).style.format({
 }))
 
 st.info(f"Technical Analysis: Based on {metal_type} and a viscosity advantage ({cli_visc} vs {comp_visc} cSt), we have modeled a significant reduction in maintenance frequency and disposal volume.")
+
+# --- LEGAL FOOTER ---
+st.markdown("---")
+st.caption("""
+    PROPRIETARY TOOL: © 2026 Consultant Lubricants, Inc. 
+    Unauthorized modification, reverse engineering, or diagnosis of 
+    internal formulas is strictly prohibited. For visualization purposes only.
+""")
