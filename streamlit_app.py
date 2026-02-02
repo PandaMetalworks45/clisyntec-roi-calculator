@@ -13,7 +13,7 @@ st.markdown("""
 100%{opacity: 1; transform: translateY(0);}
 }
 </style>
-""", unsafe_allow_html=true)
+""", unsafe_allow_html=True)
 # Initialize Session State to track which page the user is on
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
