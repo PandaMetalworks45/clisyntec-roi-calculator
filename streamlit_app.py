@@ -41,7 +41,7 @@ elif st.session_state.page == 'calculator':
 
     # --- SIDEBAR: TECHNICAL CHARACTERISTICS ---
     st.sidebar.header("1. Physical Characteristics")
-    metal_type = st.sidebar.selectbox("Metal Type", ["Carbon Steel", "Stainless Steel", "Aluminum", "High-Strength Steel (AHSS)"])
+    metal_type = st.sidebar.selectbox("Metal Type", ["Carbon Steel", "Stainless Steel", "Aluminum", "Cast Iron", "High-Strength Steel (AHSS)"])
 
     st.sidebar.subheader("Fluid Properties")
     comp_visc = st.sidebar.number_input("Competitor Viscosity (cSt @ 40C)", value=40)
@@ -61,6 +61,8 @@ elif st.session_state.page == 'calculator':
         c_scrap = st.number_input("Scrap Rate (%)", value=2.5, key="c_s")
         c_maint_freq = st.number_input("Annual Maintenance Frequency (times/year)", value=12)
         c_downtime_cost = st.number_input("Avg. Downtime Cost per Event ($)", value=1200.0)
+        # FIXED: Changed 1:1 to "1:1" string to prevent syntax error
+        c_dilution_ratio = st.text_input("Dilution Ratio at Machine (X:Y)", value="1:1")
 
     with col2:
         st.subheader("Projected Process (CLISYNTEC)")
@@ -103,6 +105,23 @@ elif st.session_state.page == 'calculator':
         "Savings ($)": [c_f-p_f, c_dis-p_dis, c_s-p_s, c_m-p_m, annual_savings]
     }
     st.table(pd.DataFrame(comparison_data).style.format({"Current ($)": "${:,.2f}", "CLISYNTEC ($)": "${:,.2f}", "Savings ($)": "${:,.2f}"}))
+
+    # --- NEW: TCO STAGGERED GRAPH ---
+    import plotly.graph_objects as go
+    
+    st.subheader("12-Month Cumulative TCO Projection")
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    
+    # Calculate staggered monthly points (Cumulative)
+    current_monthly_pts = [(c_total / 12) * i for i in range(1, 13)]
+    clisyntec_monthly_pts = [(p_total / 12) * i for i in range(1, 13)]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=months, y=current_monthly_pts, name="Competitor Total Cost", line=dict(color='#FF4B4B', width=3)))
+    fig.add_trace(go.Scatter(x=months, y=clisyntec_monthly_pts, name="CLISYNTEC Total Cost", line=dict(color='#00CC96', width=3)))
+    
+    fig.update_layout(hovermode="x unified", template="plotly_white", margin=dict(l=20, r=20, t=40, b=20))
+    st.plotly_chart(fig, use_container_width=True)
 
     st.info(f"Technical Analysis: Based on {metal_type} and a viscosity advantage ({cli_visc} vs {comp_visc} cSt), we have modeled a significant reduction in maintenance frequency.")
 
