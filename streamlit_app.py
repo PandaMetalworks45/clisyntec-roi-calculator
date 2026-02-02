@@ -2,82 +2,91 @@ import streamlit as st
 import pandas as pd
 
 # --- BRANDING & SETUP ---
-st.set_page_config(page_title="CLISYNTEC Technical ROI", layout="wide")
-st.title("CLISYNTEC Technical Performance & ROI Simulator")
-st.markdown("### Process Fluid Engineering vs. Commodity Lubricants")
+st.set_page_config(page_title="CLISYNTEC Master ROI Calculator", layout="wide")
+st.title("Consultant Lubricants Master ROI Calculator")
+st.markdown("### Integration of Process Physics and Financial Metrics")
 
-# --- SIDEBAR: PHYSICAL & MECHANICAL FACTORS ---
+# --- SIDEBAR: TECHNICAL CHARACTERISTICS (The Physics) ---
 st.sidebar.header("1. Physical Characteristics")
 metal_type = st.sidebar.selectbox("Metal Type", ["Carbon Steel", "Stainless Steel", "Aluminum", "High-Strength Steel (AHSS)"])
-part_complexity = st.sidebar.select_slider("Part Complexity", options=["Low", "Medium", "High", "Critical"])
 
 st.sidebar.subheader("Fluid Properties")
 comp_visc = st.sidebar.number_input("Competitor Viscosity (cSt @ 40C)", value=40)
 cli_visc = st.sidebar.number_input("CLISYNTEC Viscosity (cSt @ 40C)", value=52)
 
-st.sidebar.header("2. Mechanical Factors")
-operating_temp_goal = st.sidebar.slider("Target Die Temperature (F)", 80, 250, 110)
-shut_height_issue = st.sidebar.toggle("Experience Shut Height Drift?")
+st.sidebar.header("2. Maintenance & Disposal")
+disposal_cost_gal = st.sidebar.number_input("Disposal Cost per Gallon ($)", value=1.50)
+die_coating_cost = st.sidebar.number_input("Annual Die Coating Costs ($)", value=2500.0)
 
 # --- MAIN INPUTS ---
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Current Competitor")
-    c_price = st.number_input("Price per Gallon ($)", value=18.00, key="c_p")
-    c_usage = st.number_input("Gallons Consumed / Shift", value=50.0, key="c_u")
-    c_scrap = st.number_input("Current Scrap Rate (%)", value=2.5, key="c_s")
-    c_die_life = st.number_input("Parts between Sharpening", value=15000, key="c_d")
+    st.subheader("Current Process (Competitor)")
+    c_price = st.number_input("Lubricant Price per Gallon ($)", value=18.00, key="c_p")
+    c_usage = st.number_input("Annual Lubricant Volume (Gal)", value=5000.0, key="c_u")
+    c_scrap = st.number_input("Scrap Rate (%)", value=2.5, key="c_s")
+    c_maint_freq = st.number_input("Annual Maintenance Frequency (times/year)", value=12)
+    c_downtime_cost = st.number_input("Avg. Downtime Cost per Event ($)", value=1200.0)
 
 with col2:
-    st.subheader("CLISYNTEC Solution")
-    p_price = st.number_input("Price per Gallon ($)", value=26.00, key="p_p")
-    # Technical Logic: Better viscosity/cling usually reduces volume needed
-    suggested_usage = c_usage * 0.85 if cli_visc > comp_visc else c_usage
-    p_usage = st.number_input("Gallons Consumed / Shift (Predicted)", value=float(suggested_usage), key="p_u")
-    p_scrap = st.number_input("Predicted Scrap Rate (%)", value=0.5, key="p_s")
-    p_die_life = st.number_input("Parts between Sharpening (Predicted)", value=int(c_die_life * 1.4), key="p_d")
+    st.subheader("Projected Process (CLISYNTEC)")
+    p_price = st.number_input("CLISYNTEC Price per Gallon ($)", value=28.00, key="p_p")
+    
+    # Technical Logic: Better viscosity reduces consumption
+    suggested_usage = c_usage * 0.88 if cli_visc > comp_visc else c_usage
+    p_usage = st.number_input("Projected Annual Volume (Gal)", value=float(suggested_usage), key="p_u")
+    
+    p_scrap = st.number_input("Projected Scrap Rate (%)", value=0.5, key="p_s")
+    
+    # Better lubrication reduces maintenance frequency
+    p_maint_freq = st.number_input("Projected Maint. Frequency", value=int(c_maint_freq * 0.5))
+    p_downtime_cost = c_downtime_cost # Assuming cost per event stays same, frequency drops
 
-# --- SHARED CONSTANTS ---
+# --- CALCULATION CONSTANTS ---
 st.markdown("---")
-with st.expander("Adjust Global Labor & Tooling Costs"):
-    labor_rate = st.number_input("Maintenance Labor Rate ($/hr)", value=85)
-    regrind_cost = st.number_input("Average Cost per Die Sharpen ($)", value=650)
-    blank_cost = st.number_input("Cost of Raw Metal Blank ($)", value=3.25)
-    shifts_per_year = 250
-    parts_per_shift = 5000
+with st.expander("Process Metrics & Material Costs"):
+    blank_cost = st.number_input("Cost Per Unit / Blank ($)", value=3.25)
+    annual_production = st.number_input("Total Annual Units Produced", value=1250000)
 
-# --- THE MATH ENGINE ---
-def run_calc(price, usage, scrap, die_life):
-    total_parts = parts_per_shift * shifts_per_year
-    annual_fluid = (usage * shifts_per_year) * price
-    annual_scrap = total_parts * (scrap/100) * blank_cost
+# --- THE UNIFIED MATH ENGINE ---
+def calculate_tco(price, volume, scrap, maint_freq, downtime_val):
+    # 1. Direct Fluid Cost
+    fluid_total = price * volume
+    # 2. Disposal Cost
+    disposal_total = volume * disposal_cost_gal
+    # 3. Scrap Cost
+    scrap_total = annual_production * (scrap/100) * blank_cost
+    # 4. Maintenance/Downtime Cost
+    maintenance_total = (maint_freq * downtime_val) + die_coating_cost
     
-    # Tooling Downtime (Assumes 2 hours to swap a die)
-    num_regrinds = total_parts / die_life
-    tooling_direct_cost = num_regrinds * regrind_cost
-    tooling_labor_cost = num_regrinds * 2 * labor_rate
-    
-    total_tco = annual_fluid + annual_scrap + tooling_direct_cost + tooling_labor_cost
-    return annual_fluid, annual_scrap, (tooling_direct_cost + tooling_labor_cost), total_tco
+    total_tco = fluid_total + disposal_total + scrap_total + maintenance_total
+    return fluid_total, disposal_total, scrap_total, maintenance_total, total_tco
 
-# Executing Calcs
-c_f, c_s, c_t, c_total = run_calc(c_price, c_usage, c_scrap, c_die_life)
-p_f, p_s, p_t, p_total = run_calc(p_price, p_usage, p_scrap, p_die_life)
+# Run calculations
+c_f, c_dis, c_s, c_m, c_total = calculate_tco(c_price, c_usage, c_scrap, c_maint_freq, c_downtime_cost)
+p_f, p_dis, p_s, p_m, p_total = calculate_tco(p_price, p_usage, p_scrap, p_maint_freq, p_downtime_cost)
 
-# --- VISUALS ---
-st.header("Total Cost of Ownership Comparison")
-m1, m2 = st.columns(2)
-m1.metric("Annual Savings with CLISYNTEC", f"${c_total - p_total:,.2f}")
-m2.metric("ROI Factor", f"{round((c_total - p_total) / p_f, 1)}x", help="For every $1 spent on CLISYNTEC, you save this much in process costs.")
+annual_savings = c_total - p_total
 
-# Data Table
-df = pd.DataFrame({
-    "Category": ["Fluid Expense", "Scrap/Waste", "Tooling & Labor", "TOTAL TCO"],
-    "Competitor": [c_f, c_s, c_t, c_total],
-    "CLISYNTEC": [p_f, p_s, p_t, p_total]
-})
-st.table(df.style.format({"Competitor": "${:,.2f}", "CLISYNTEC": "${:,.2f}"}))
+# --- OUTPUT DASHBOARD ---
+st.header("Financial Impact Summary")
+m1, m2, m3 = st.columns(3)
+m1.metric("Total Annual Savings", f"${annual_savings:,.2f}")
+m2.metric("Maintenance Reduction", f"{int(((c_m - p_m)/c_m)*100)}%")
+m3.metric("Fluid ROI", f"{round(annual_savings / p_f, 1)}x")
 
-# Technical Commentary
-st.info(f"Technical Insight: Based on a {metal_type} substrate and a viscosity of {cli_visc} cSt, CLISYNTEC provides superior boundary lubrication. This accounts for the projected {p_die_life - c_die_life:,} hit increase in die life.")
+# Comparison Table
+comparison_data = {
+    "Expense Category": ["Lubricant Purchase", "Fluid Disposal", "Scrap & Waste", "Maintenance & Die Costs", "Total Process Cost"],
+    "Current ($)": [c_f, c_dis, c_s, c_m, c_total],
+    "CLISYNTEC ($)": [p_f, p_dis, p_s, p_m, p_total],
+    "Savings ($)": [c_f-p_f, c_dis-p_dis, c_s-p_s, c_m-p_m, annual_savings]
+}
+st.table(pd.DataFrame(comparison_data).style.format({
+    "Current ($)": "${:,.2f}", 
+    "CLISYNTEC ($)": "${:,.2f}", 
+    "Savings ($)": "${:,.2f}"
+}))
+
+st.info(f"Technical Analysis: Based on {metal_type} and a viscosity advantage ({cli_visc} vs {comp_visc} cSt), we have modeled a significant reduction in maintenance frequency and disposal volume.")
