@@ -4,6 +4,16 @@ import pandas as pd
 # --- BRANDING & SETUP ---
 st.set_page_config(page_title="CLISYNTEC Master ROI Calculator", layout="wide")
 
+# --- Animation CSS ---
+st.markdown("""
+<style> 
+.stApp{animation: fadeIn 0.5s ease-in;}
+@keyFrames fadeIn {
+0%{opacity: 0; transform: translateY(10px);}
+100%{opacity: 1; transform: translateY(0);}
+}
+</style>
+""", unsafe_allow_html=true)
 # Initialize Session State to track which page the user is on
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
