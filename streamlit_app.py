@@ -4,6 +4,7 @@ import plotly as go
 
 # --- BRANDING & SETUP ---
 st.set_page_config(page_title="CLISYNTEC Master ROI Calculator", layout="wide")
+st.link_button(button_title="Request a Sample", "https://surveryhero.com/c/consultantlubricants", use_container_width=True)
 
 # --- Animation CSS ---
 st.markdown("""
