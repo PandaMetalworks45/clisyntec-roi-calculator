@@ -39,7 +39,7 @@ def apply_press_animation():
     }
 
     .stApp {
-        animation: contentReveal 2.4s ease-in;
+        animation: contentReveal 2.0s ease-in;
     }
     </style>
     <div class="press-overlay"></div>
