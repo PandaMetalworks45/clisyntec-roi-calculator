@@ -6,16 +6,44 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="CLISYNTEC Master ROI Calculator", layout="wide")
 st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
-# --- Animation CSS ---
-st.markdown("""
-<style> 
-.stApp{animation: fadeIn 1.0s ease-in;}
-@keyframes fadeIn {
-    0%{opacity: 0; transform: translateY(10px);}
-    100%{opacity: 1; transform: translateY(0);}
-}
-</style>
-""", unsafe_allow_html=True)
+# --- CUSTOM CSS FOR STAMPING ANIMATION ---
+def apply_press_animation():
+    st.markdown("""
+    <style>
+    /* The Press Ram (Overlay) */
+    @keyframes pressStroke {
+        0% { transform: translateY(-100%); }   /* Ram is up */
+        40% { transform: translateY(0%); }     /* Ram slams down (HIT) */
+        60% { transform: translateY(0%); }     /* Dwell time */
+        100% { transform: translateY(-100%); } /* Ram retracts */
+    }
+
+    .press-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(to bottom, #161b22, #30363d, #161b22);
+        z-index: 9999;
+        animation: pressStroke 1.2s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+        pointer-events: none;
+        border-bottom: 5px solid #2563eb; /* Industrial Blue "Die" Edge */
+    }
+
+    /* Content Fade In */
+    @keyframes contentReveal {
+        0% { opacity: 0; }
+        60% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    .stApp {
+        animation: contentReveal 1.2s ease-in;
+    }
+    </style>
+    <div class="press-overlay"></div>
+    """, unsafe_allow_html=True)
 
 # Initialize Session State
 if 'page' not in st.session_state:
@@ -37,6 +65,7 @@ SAVINGS_RATES = {
 
 # --- PAGE 1: THE WELCOME MENU ---
 if st.session_state.page == 'menu':
+    apply_press_animation() # Trigger the press on page load
     st.title("Welcome to CLISYNTEC'S TCO Calculator!")
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
