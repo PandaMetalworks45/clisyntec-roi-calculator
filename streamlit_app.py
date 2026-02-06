@@ -106,42 +106,61 @@ with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # 1. Create a container for our "Image Button"
-        logo_container = st.container()
+        # We wrap both the button and the image in a div to control the stack
+        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         
-        with logo_container:
-            # 2. Place a button with a hidden label. 
-            # We will use CSS to make this button transparent and cover the image.
-            if st.button(" ", key="logo_nav_button", use_container_width=True):
-                st.session_state.page = 'menu'
-                st.rerun()
+        # 1. The invisible button
+        if st.button(" ", key="logo_nav_button", use_container_width=True):
+            st.session_state.page = 'menu'
+            st.rerun()
 
-            # 3. Display the logo image immediately under the hidden button
-            st.markdown(f'''
-                <div style="margin-top: -45px; pointer-events: none;">
+        # 2. The image that sits behind it
+        st.markdown(f'''
+                <div class="logo-image-container">
                     <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%;">
                 </div>
-            ''', unsafe_allow_html=True)
-            
-        # 4. Add CSS specifically to make that one button transparent
+            </div>
+        ''', unsafe_allow_html=True)
+        
+        # 3. CSS to stretch the button over the entire image area
         st.markdown("""
             <style>
-            /* Make the logo button transparent so the image shows through */
-            div[data-testid="stSidebar"] .stButton button[kind="secondary"] {
+            /* Position the wrapper */
+            .logo-wrapper {
+                position: relative;
+                width: 100%;
+            }
+
+            /* Make the button invisible and stretch it to cover everything */
+            div[data-testid="stSidebar"] .stButton button {
+                position: absolute !important;
+                top: 0;
+                left: 0;
+                width: 100% !important;
+                height: 180px !important; /* Force the height to match a large logo */
                 background-color: transparent !important;
                 border: none !important;
-                height: 150px; /* Adjust this height to match your logo size */
-                margin-bottom: -150px;
-                z-index: 10;
+                z-index: 10 !important;
+                color: transparent !important;
             }
-            /* Remove the hover effect for the logo button only */
-            div[data-testid="stSidebar"] .stButton button[kind="secondary"]:hover {
-                background-color: rgba(255,255,255,0.05) !important;
+
+            /* Ensure no weird hover outlines on the invisible button */
+            div[data-testid="stSidebar"] .stButton button:hover {
+                background-color: rgba(255, 255, 255, 0.03) !important;
+                border: none !important;
+            }
+
+            /* Push the image into the correct visual slot */
+            .logo-image-container {
+                margin-top: 0px;
+                pointer-events: none;
             }
             </style>
         """, unsafe_allow_html=True)
     else:
-        st.error("Logo File Missing")
+        if st.button("Main Menu", use_container_width=True):
+            st.session_state.page = 'menu'
+            st.rerun()
 
     st.markdown("---")
     
