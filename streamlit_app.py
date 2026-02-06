@@ -62,6 +62,19 @@ def apply_custom_styling():
         color: #ffffff !important; 
         box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4) !important;
     }
+    
+    /* This makes only the Main Menu buttons huge */
+    .menu-btn-container .stButton>button {
+        height: 250px !important;
+        font-size: 30px !important;
+        border: 2px solid #00b5ad !important;
+        transition: all 0.3s ease !important;
+        white-space: pre-wrap !important; /* Allows the \n to create new lines */
+    }
+    .menu-btn-container .stButton>button:hover {
+        border: 2px solid #8e44ad !important;
+        transform: scale(1.02);
+    }
 
     /* Input Box Styling */
     div[data-baseweb="input"], [data-testid="stNumberInput"] input {
