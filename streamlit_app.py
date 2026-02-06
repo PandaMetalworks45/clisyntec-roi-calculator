@@ -106,24 +106,43 @@ with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # We use a button that triggers the 'menu' state
-        # The key="logo_btn" ensures Streamlit tracks this specific click
-        if st.button("Return to Main Menu", key="logo_btn", use_container_width=True):
-            st.session_state.page = 'menu'
-            st.rerun()
+        # 1. Create a container for our "Image Button"
+        logo_container = st.container()
+        
+        with logo_container:
+            # 2. Place a button with a hidden label. 
+            # We will use CSS to make this button transparent and cover the image.
+            if st.button(" ", key="logo_nav_button", use_container_width=True):
+                st.session_state.page = 'menu'
+                st.rerun()
+
+            # 3. Display the logo image immediately under the hidden button
+            st.markdown(f'''
+                <div style="margin-top: -45px; pointer-events: none;">
+                    <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%;">
+                </div>
+            ''', unsafe_allow_html=True)
             
-        # Display the Large Logo immediately under the button
-        st.markdown(f'''
-            <div style="margin-top: 10px;">
-                <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%; border-radius: 5px;">
-            </div>
-        ''', unsafe_allow_html=True)
+        # 4. Add CSS specifically to make that one button transparent
+        st.markdown("""
+            <style>
+            /* Make the logo button transparent so the image shows through */
+            div[data-testid="stSidebar"] .stButton button[kind="secondary"] {
+                background-color: transparent !important;
+                border: none !important;
+                height: 150px; /* Adjust this height to match your logo size */
+                margin-bottom: -150px;
+                z-index: 10;
+            }
+            /* Remove the hover effect for the logo button only */
+            div[data-testid="stSidebar"] .stButton button[kind="secondary"]:hover {
+                background-color: rgba(255,255,255,0.05) !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
     else:
-        # Fallback if image is missing
-        if st.button("Main Menu", use_container_width=True):
-            st.session_state.page = 'menu'
-            st.rerun()
-    
+        st.error("Logo File Missing")
+
     st.markdown("---")
     
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
