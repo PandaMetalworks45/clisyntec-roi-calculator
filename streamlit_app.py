@@ -104,7 +104,7 @@ def apply_custom_styling():
 # --- 3. SIDEBAR (LARGE LINKED LOGO & CONTACT INFO) ---
 with st.sidebar:
     home_url = "https://consultantlubricants.com/"
-    image_path = "CLI_Cap_Label2".jpg"
+    image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
         # Large Logo that takes you home and has no fullscreen button
