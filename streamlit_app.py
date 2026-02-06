@@ -151,6 +151,7 @@ SAVINGS_RATES = {
 }
 
 # --- 5. PAGE: WELCOME MENU ---
+# --- 5. PAGE: WELCOME MENU ---
 if st.session_state.page == 'menu':
     apply_custom_styling()
     st.title("Consultant Lubricant's TCO Calculator")
@@ -172,7 +173,11 @@ if st.session_state.page == 'menu':
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
-    calc_mode = st.session_state.get('calc_type', 'Forming')
+    # Safety check for calc_type
+    if 'calc_type' not in st.session_state:
+        st.session_state.calc_type = 'Forming'
+    
+    calc_mode = st.session_state.calc_type
     
     if st.button("← Back to Menu"):
         st.session_state.page = 'menu'
@@ -187,75 +192,103 @@ elif st.session_state.page == 'calculator':
         with col1:
             st.subheader("Process Productivity")
             if calc_mode == 'Subtractive':
-                primary_val = st.number_input("Annual Tooling / Insert Spend ($)", value=15000.0)
-                lub_volume_annually = st.number_input("Annual Coolant Concentrate Spend ($)", value=8000.0)
-                scrap_rate_cost = st.number_input("Annual Part Rejection/Rework Cost ($)", value=5000.0)
+                primary_val = st.number_input("Annual Tooling / Insert Spend ($)", value=15000.0, key="sub_tool")
+                lub_volume_annually = st.number_input("Annual Coolant Concentrate Spend ($)", value=8000.0, key="sub_lub")
+                scrap_rate_cost = st.number_input("Annual Part Rejection/Rework Cost ($)", value=5000.0, key="sub_scrap")
             else:
-                primary_val = st.number_input("Annual Die Coating Costs ($)", value=5000.0)
-                lub_volume_annually = st.number_input("Annual Lubricant Spend ($)", value=10000.0)
-                scrap_rate_cost = st.number_input("Annual Scrap/Defect Cost ($)", value=8000.0)
+                primary_val = st.number_input("Annual Die Coating Costs ($)", value=5000.0, key="form_die")
+                lub_volume_annually = st.number_input("Annual Lubricant Spend ($)", value=10000.0, key="form_lub")
+                scrap_rate_cost = st.number_input("Annual Scrap/Defect Cost ($)", value=8000.0, key="form_scrap")
         
         with col2:
             st.subheader("Maintenance & Labor")
             maint_label = "Cost per Sump Clean-out ($)" if calc_mode == 'Subtractive' else "Cost per Press Clean-out ($)"
-            maint_event_cost = st.number_input(maint_label, value=2500.0)
-            maint_frequency = st.number_input("Clean-outs Per Year", value=4)
-            labor_annual = st.number_input("Total Annual Fluid Labor ($)", value=5000.0)
-            disposal_annual = st.number_input("Total Annual Disposal Fees ($)", value=1500.0)
+            maint_event_cost = st.number_input(maint_label, value=2500.0, key="maint_cost_in")
+            maint_frequency = st.number_input("Clean-outs Per Year", value=4, key="maint_freq_in")
+            labor_annual = st.number_input("Total Annual Fluid Labor ($)", value=5000.0, key="labor_in")
+            disposal_annual = st.number_input("Total Annual Disposal Fees ($)", value=1500.0, key="disp_in")
 
     # --- CALCULATION LOGIC ---
     current_maint = maint_event_cost * maint_frequency
     
     if calc_mode == 'Subtractive':
-        s_primary = primary_val * 0.25  # 25% Tool Life
-        s_vol = lub_volume_annually * 0.20 # 20% Concentration stability
-        s_maint = current_maint * 0.50     # 50% Sump Life
+        s_primary = primary_val * 0.25  
+        s_vol = lub_volume_annually * 0.20 
+        s_maint = current_maint * 0.50     
     else:
-        s_primary = primary_val * 0.30  # 30% Die Coating
-        s_vol = lub_volume_annually * 0.50 # 50% Vol reduction
-        s_maint = current_maint * 0.30     # 30% Cleaner Press
+        s_primary = primary_val * 0.30  
+        s_vol = lub_volume_annually * 0.50 
+        s_maint = current_maint * 0.30     
 
     total_savings = s_primary + s_vol + (scrap_rate_cost * 0.30) + (labor_annual * 0.30) + s_maint
 
     # --- DASHBOARD OUTPUT (SAVINGS & ROI) ---
     st.markdown("---")
     d1, d2 = st.columns(2)
-    d1.markdown(f"""
-        <div style="background: rgba(0, 181, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #00b5ad; text-align: center;">
-            <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Total Estimated Annual Savings</p>
-            <h1 style="color: #00b5ad; margin: 10px 0;">${total_savings:,.2f}</h1>
-        </div>
-    """, unsafe_allow_html=True)
+    with d1:
+        st.markdown(f"""
+            <div style="background: rgba(0, 181, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #00b5ad; text-align: center;">
+                <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Total Estimated Annual Savings</p>
+                <h1 style="color: #00b5ad; margin: 10px 0;">${total_savings:,.2f}</h1>
+            </div>
+        """, unsafe_allow_html=True)
     
-    roi = (total_savings / (lub_volume_annually if lub_volume_annually > 0 else 1) * 100)
-    d2.markdown(f"""
-        <div style="background: rgba(142, 68, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #8e44ad; text-align: center;">
-            <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Projected ROI</p>
-            <h1 style="color: #8e44ad; margin: 10px 0;">{roi:.1f}%</h1>
-        </div>
-    """, unsafe_allow_html=True)
+    with d2:
+        roi = (total_savings / (lub_volume_annually if lub_volume_annually > 0 else 1) * 100)
+        st.markdown(f"""
+            <div style="background: rgba(142, 68, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #8e44ad; text-align: center;">
+                <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Projected ROI</p>
+                <h1 style="color: #8e44ad; margin: 10px 0;">{roi:.1f}%</h1>
+            </div>
+        """, unsafe_allow_html=True)
 
-    # --- VISUALIZATION (THE GRAPH) ---
+    # --- THE GRAPH SECTION ---
     st.markdown("### Cumulative 12-Month Cost Comparison")
+    
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     current_annual_burden = (current_maint + primary_val + lub_volume_annually + labor_annual + disposal_annual)
     projected_annual_burden = current_annual_burden - total_savings
 
+    # Build the data points
+    current_trend = [(current_annual_burden/12)*i for i in range(1,13)]
+    projected_trend = [(projected_annual_burden/12)*i for i in range(1,13)]
+
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=months, y=[(current_annual_burden/12)*i for i in range(1,13)], 
-                             name="Current Process", line=dict(color='#8e44ad', width=4, dash='dot')))
-    fig.add_trace(go.Scatter(x=months, y=[(projected_annual_burden/12)*i for i in range(1,13)], 
-                             name="Consultant Lubricants", line=dict(color='#00b5ad', width=5), 
-                             fill='tonexty', fillcolor='rgba(0, 181, 173, 0.1)'))
+    
+    # Current Cost Line
+    fig.add_trace(go.Scatter(
+        x=months, y=current_trend, 
+        name="Current Process", 
+        line=dict(color='#8e44ad', width=4, dash='dot')
+    ))
+    
+    # Consultant Lubricants Line
+    fig.add_trace(go.Scatter(
+        x=months, y=projected_trend, 
+        name="Consultant Lubricants", 
+        line=dict(color='#00b5ad', width=5), 
+        fill='tonexty', 
+        fillcolor='rgba(0, 181, 173, 0.1)'
+    ))
     
     fig.update_layout(
-        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        template="plotly_dark", 
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=450,
+        margin=dict(l=20, r=20, t=50, b=20),
         font=dict(color="#ffffff"),
-        xaxis=dict(tickfont=dict(color="#ffffff")),
-        yaxis=dict(tickfont=dict(color="#ffffff"), title="Cumulative Spend ($)"),
+        xaxis=dict(tickfont=dict(color="#ffffff"), showgrid=False),
+        yaxis=dict(tickfont=dict(color="#ffffff"), title="Cumulative Spend ($)", showgrid=True, gridcolor="#30363d"),
         legend=dict(font=dict(color="#ffffff"), orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig, use_container_width=True)
+
+    # Force the render
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+# --- 7. FOOTER ---
+st.markdown("---")
+st.caption("Consultant Lubricants, Inc. | 9 Research Park Dr, St. Peters, MO 63376 | 636-926-9903")
 
 # --- 7. FOOTER ---
 st.markdown("---")
