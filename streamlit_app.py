@@ -37,14 +37,12 @@ def apply_custom_styling():
         display: none !important;
     }
 
-    /* Sidebar Styling */
+    /* Sidebar Styling - UPDATED TO BE SOLID */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #161b22 0%, #00b5ad15 100%);
+        background-color: #161b22 !important; /* Solid Dark Grey/Black */
+        background-image: none !important;    /* Removes the previous gradient */
         border-right: 1px solid #30363d;
-    }
-    
-    [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] p {
-        color: #ffffff !important;
+        opacity: 1 !important;
     }
 
     /* Buttons - BLACK TEXT on Teal Background */
