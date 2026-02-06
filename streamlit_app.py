@@ -9,35 +9,33 @@ def get_base64_of_bin_file(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# --- 1. BRANDING & BROWSER SETUP ---
+# Branding and Browser
 st.set_page_config(
     page_title="Consultant Lubricant's TCO Calculator", 
     page_icon="💧",
     layout="wide"
 )
 
-# --- 2. CUSTOM CSS (FORCING BRAND THEME & HIDING FULLSCREEN) ---
+# Custom CSS
 def apply_custom_styling():
     st.markdown("""
     <style>
-    /* Force Global Dark Background and White Text */
     .stApp {
         background: radial-gradient(circle at top right, #8e44ad15, #0e1117 50%),
                     radial-gradient(circle at bottom left, #00b5ad10, #0e1117 50%);
         color: #ffffff !important;
     }
 
-    /* Target all headers, subheaders, and labels to be white */
+    /* h1-h6,p,label, .stmarkdown Styling */
     h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, [data-testid="stMetricLabel"] {
         color: #ffffff !important;
     }
 
-    /* HIDES THE FULLSCREEN BUTTON ON EVERYTHING (Images and Graphs) */
     button[title="View fullscreen"] {
         display: none !important;
     }
 
-    /* Sidebar Styling - UPDATED TO BE SOLID */
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #161b22 !important; /* Solid Dark Grey/Black */
         background-image: none !important;    /* Removes the previous gradient */
@@ -45,7 +43,7 @@ def apply_custom_styling():
         opacity: 1 !important;
     }
 
-    /* Buttons - BLACK TEXT on Teal Background */
+    /* Buttons */
     .stButton>button, .stLinkButton>a {
         background-color: #00b5ad !important;
         color: #000000 !important; 
@@ -115,7 +113,7 @@ def apply_custom_styling():
     <div class="press-overlay"></div>
     """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR (LARGE LINKED LOGO & CONTACT INFO) ---
+# Sidebar
 with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
@@ -155,7 +153,7 @@ with st.sidebar:
     st.caption("St. Peters, MO 63376")
     st.caption("636.926.9903")
 
-# --- 4. SESSION STATE & DATA ---
+# Session State
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
 
@@ -164,19 +162,19 @@ SAVINGS_RATES = {
     "maint_cost": 0.30, "labor": 0.30, "disposal": 0.30
 }
 
-# --- 5. PAGE: WELCOME MENU ---
+# Welcome Menu
 if st.session_state.page == 'menu':
     apply_custom_styling()
     
-    # Title and Subtitle (Keep these centered)
+    # Title
     st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Select a process to start the financial comparison.</p>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- THIS IS WHERE THE STACKED BUTTONS GO ---
+    # Buttons
     st.markdown('<div class="menu-btn-container">', unsafe_allow_html=True)
     
-    # First Big Button
+    # Forming Button
     if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
         st.session_state.calc_type = 'Forming'
@@ -184,21 +182,20 @@ if st.session_state.page == 'menu':
         
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Second Big Button
+    # Subtractive Button
     if st.button("⚙️\n\nSUBTRACTIVE CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
         st.session_state.calc_type = 'Subtractive'
         st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
-    # --- END OF STACKED BUTTONS ---
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # The Slider/Carousel section usually follows right after this...
+    # INSERT IMAGE SLIDER CAROSUEL HERE
 
-# --- 6. PAGE: THE CALCULATOR ---
+# Calculator
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
@@ -214,12 +211,13 @@ elif st.session_state.page == 'calculator':
     st.title(f"{calc_mode} Lubricant Cost Comparison")
     st.markdown(f"Projected Savings using **Consultant Lubricants Technology**.")
 
-    # --- INPUT SECTION ---
+    # User Input
     with st.container():
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Process Productivity")
-            
+
+                    # Subtractive Calculator Input
             if calc_mode == 'Subtractive':
                 avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=300.0, key="sub_tool_avg")
                 tool_changes = st.number_input("Annual Tool Changes (#)", value=150, key="sub_t_changes")
@@ -231,10 +229,10 @@ elif st.session_state.page == 'calculator':
                 # Hidden variables for math consistency
                 die_change_total = 0
             
-            else: # FORMING CALCULATOR (WITH NEW DIE CHANGE FIELDS)
+            else: # Forming Calculator Input
                 primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
                 
-                # NEW FIELDS FOR FORMING
+                # Fields For Forming
                 annual_die_changes = st.number_input("Annual Die Changes (#)", value=24, key="form_die_changes")
                 cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=200, key="form_cost_per_die")
                 
@@ -245,19 +243,20 @@ elif st.session_state.page == 'calculator':
                 
                 # Hidden variables for math consistency
                 tool_changes = 0
-        
+
+               # Fields for Subtractive
         with col2:
             st.subheader("Maintenance & Fluid Costs")
             fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Sump Fill ($)"
             
             fill_cost = st.number_input(fill_label, value=1000, key=f"{calc_mode}_fill_val")
-            fill_frequency = st.number_input("Fills Per Year", value=6, key=f"{calc_mode}_freq_val")
+            fill_frequency = st.number_input("Fills Per Year (#)", value=6, key=f"{calc_mode}_freq_val")
             
             monthly_adds = st.number_input("Monthly Additives Cost ($)", value=300, key=f"{calc_mode}_adds_val")
             annual_additives = monthly_adds * 12
             disposal_annual = st.number_input("Annual Disposal Fees ($)", value=1500.0, key=f"{calc_mode}_disp_val")
 
-    # --- CALCULATION LOGIC ---
+    # Calculation Logic
     current_fills_total = fill_cost * fill_frequency
     
     if calc_mode == 'Subtractive':
@@ -271,7 +270,7 @@ elif st.session_state.page == 'calculator':
         s_scrap = scrap_burden * 0.30       
         total_savings = s_tooling + s_labor + s_fills + s_adds + s_scrap
         
-    else: # FORMING (UPDATED MATH)
+    else: # FORMING
         # Adding the Die Change Total to the Base Cost
         base_annual_cost = primary_val + die_change_total + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
@@ -288,7 +287,7 @@ elif st.session_state.page == 'calculator':
     current_annual_burden = base_annual_cost + scrap_burden
     projected_annual_burden = current_annual_burden - total_savings
 
-    # --- DASHBOARD OUTPUT ---
+    # Estimate Dashboard
     st.markdown("---")
     d1, d2 = st.columns(2)
     with d1:
@@ -310,7 +309,7 @@ elif st.session_state.page == 'calculator':
             </div>
         """, unsafe_allow_html=True)
 
-    # --- THE GRAPH SECTION ---
+    # Graph
     st.markdown("### Cumulative 12-Month Cost Comparison")
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     projected_annual_burden = current_annual_burden - total_savings
@@ -331,10 +330,8 @@ elif st.session_state.page == 'calculator':
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# --- 7. FOOTER ---
+# Footer
 st.markdown("---")
-st.caption("Consultant Lubricants, Inc. | 9 Research Park Dr, St. Peters, MO 63376 | 636-926-9903")
-
-# --- 7. FOOTER ---
+st.caption("Consultant Lubricants, Inc. | 9 Research Park Dr. St. Peters, MO 63376 | 636-926-9903")
 st.markdown("---")
 st.caption("PROPRIETARY & CONFIDENTIAL: © 2026 Consultant Lubricants, Inc.")
