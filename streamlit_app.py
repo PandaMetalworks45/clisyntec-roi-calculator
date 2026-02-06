@@ -211,7 +211,7 @@ elif st.session_state.page == 'calculator':
     fig.add_trace(go.Scatter(x=months, y=[(current_annual_burden/12)*i for i in range(1,13)], 
                              name="Current Process (Higher Cost)", line=dict(color='#8e44ad', width=4, dash='dot')))
     fig.add_trace(go.Scatter(x=months, y=[(projected_annual_burden/12)*i for i in range(1,13)], 
-                             name="CONSULTANT LUBRICANTS (Lower Cost)", line=dict(color='#00b5ad', width=5), fill='tonexty', fillcolor='rgba(0, 181, 173, 0.1)'))
+                             name="Consultant Lubricants (Lower Cost)", line=dict(color='#00b5ad', width=5), fill='tonexty', fillcolor='rgba(0, 181, 173, 0.1)'))
     
     fig.update_layout(
         template="plotly_dark", 
