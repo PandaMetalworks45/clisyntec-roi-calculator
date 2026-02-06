@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import os
+import base64
+
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
 # --- 1. BRANDING & BROWSER SETUP ---
 st.set_page_config(
@@ -10,7 +16,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. CUSTOM CSS (FORCING WHITE TEXT EVERYWHERE) ---
+# --- 2. CUSTOM CSS (FORCING BRAND THEME & HIDING FULLSCREEN) ---
 def apply_custom_styling():
     st.markdown("""
     <style>
@@ -21,9 +27,14 @@ def apply_custom_styling():
         color: #ffffff !important;
     }
 
-    /* Target all headers, subheaders, and labels */
-    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
+    /* Target all headers, subheaders, and labels to be white */
+    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, [data-testid="stMetricLabel"] {
         color: #ffffff !important;
+    }
+
+    /* HIDES THE FULLSCREEN BUTTON ON EVERYTHING (Images and Graphs) */
+    button[title="View fullscreen"] {
+        display: none !important;
     }
 
     /* Sidebar Styling */
@@ -32,36 +43,34 @@ def apply_custom_styling():
         border-right: 1px solid #30363d;
     }
     
-    /* Sidebar text colors */
     [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] p {
         color: #ffffff !important;
     }
 
-    /* Buttons - Updated for BLACK TEXT */
+    /* Buttons - BLACK TEXT on Teal Background */
     .stButton>button, .stLinkButton>a {
         background-color: #00b5ad !important;
-        color: #000000 !important; /* Black Text */
+        color: #000000 !important; 
         border-radius: 8px !important;
         border: none !important;
         font-weight: bold !important;
         text-decoration: none !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
     }
     
     .stButton>button:hover, .stLinkButton>a:hover {
         background-color: #8e44ad !important;
-        color: #ffffff !important; /* Text turns white on hover for contrast */
+        color: #ffffff !important; 
         box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4) !important;
     }
 
-    /* Metric Label Fix */
-    [data-testid="stMetricLabel"] {
-        color: #ffffff !important;
+    /* Input Box Styling */
+    div[data-baseweb="input"], [data-testid="stNumberInput"] input {
+        background-color: #161b22 !important;
+        color: white !important;
+        border: 1px solid #30363d !important;
     }
 
-    /* Animation logic stays the same */
+    /* Animation Logic */
     @keyframes pressStroke {
         0% { transform: translateY(-100%); }
         40% { transform: translateY(0%); }
@@ -92,31 +101,29 @@ def apply_custom_styling():
     <div class="press-overlay"></div>
     """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR (LINKED LOGO & CONTACT INFO) ---
+# --- 3. SIDEBAR (LARGE LINKED LOGO & CONTACT INFO) ---
 with st.sidebar:
-    # URL for your home page
     home_url = "https://consultantlubricants.com/"
     image_path = "CLIsyntec WIDE2Main.jpg"
     
     if os.path.exists(image_path):
-        # We wrap the image in a link and disable the fullscreen 'zoom' button
-        st.logo(image_path, link=home_url) # This is the cleanest way for sidebars
-        # If st.logo isn't available in your version, use this instead:
-        # st.image(image_path, use_container_width=True)
+        # Large Logo that takes you home and has no fullscreen button
+        st.markdown(f'''
+            <a href="{home_url}" target="_self">
+                <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%;">
+            </a>
+        ''', unsafe_allow_html=True)
     else:
-        st.markdown(f"### [Copyright © 2026 Consultant Lubricants, Inc.  All rights reserved.]({https://consultantlubricants.com})")
+        st.markdown(f"### [CLISYNTEC™]({home_url})")
     
     st.markdown("---")
     
-    # Buttons with Black Text (per previous CSS)
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
     st.link_button("View Product Line", "https://consultantlubricants.com/clisyntec", use_container_width=True)
     
     st.markdown("---")
-    # Updated Contact Info Section
     st.caption("Consultant Lubricants, Inc.")
-    st.caption("9 Research Park Dr, St. Peters, MO 63376")
-    st.caption("636-926-9903")
+    st.caption("9 Research Park Dr, St. Peters)
 
 # --- 4. SESSION STATE & DATA ---
 if 'page' not in st.session_state:
