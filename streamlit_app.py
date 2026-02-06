@@ -63,13 +63,16 @@ def apply_custom_styling():
         box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4) !important;
     }
     
-    /* This makes only the Main Menu buttons huge */
     .menu-btn-container .stButton>button {
-        height: 250px !important;
-        font-size: 30px !important;
+        height: 200px !important;
+        width: 100% !important;
+        max-width: 800px !important; /* Prevents it from stretching too far on wide screens */
+        margin: 10px auto !important; /* Centers and adds spacing between them */
+        display: block !important;
+        font-size: 28px !important;
         border: 2px solid #00b5ad !important;
         transition: all 0.3s ease !important;
-        white-space: pre-wrap !important; /* Allows the \n to create new lines */
+        white-space: pre-wrap !important;
     }
     .menu-btn-container .stButton>button:hover {
         border: 2px solid #8e44ad !important;
