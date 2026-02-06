@@ -169,7 +169,6 @@ if st.session_state.page == 'menu':
             st.rerun()
 
 # --- 6. PAGE: THE CALCULATOR ---
-# --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
@@ -192,12 +191,15 @@ elif st.session_state.page == 'calculator':
         with col1:
             st.subheader("Process Productivity")
             if calc_mode == 'Subtractive':
-                primary_val = st.number_input("Annual Tooling / Insert Spend ($)", value=15000.0, key="sub_tool")
-                
-                # NEW: Annual Tool Change Section
+                # CHANGED: Now using average cost and changes to find total spend
+                avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=30.0, key="sub_tool_avg")
                 tool_changes = st.number_input("Annual Tool Changes (#)", value=500, key="sub_t_changes")
-                cost_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_cost")
                 
+                # Hidden Calculation for the total spend
+                primary_val = avg_tool_cost * tool_changes
+                st.caption(f"Calculated Annual Tool Spend: **${primary_val:,.2f}**")
+                
+                cost_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_cost")
                 lub_volume_annually = st.number_input("Annual Coolant Concentrate Spend ($)", value=8000.0, key="sub_lub")
                 scrap_rate_cost = st.number_input("Annual Part Rejection/Rework Cost ($)", value=5000.0, key="sub_scrap")
             else:
@@ -217,12 +219,12 @@ elif st.session_state.page == 'calculator':
     current_maint = maint_event_cost * maint_frequency
     
     if calc_mode == 'Subtractive':
-        s_primary = primary_val * 0.25  # 25% Tool life improvement
-        # Calculate Tool Change Savings (25% reduction in changes)
+        # 25% Tool life improvement (calculated from the new built total)
+        s_primary = primary_val * 0.25  
+        # Tool Change Labor Savings
         s_tool_labor = (tool_changes * cost_per_change) * 0.25 
         s_vol = lub_volume_annually * 0.20 
         s_maint = current_maint * 0.50     
-        # Added s_tool_labor to total
         total_savings = s_primary + s_tool_labor + s_vol + (scrap_rate_cost * 0.30) + (labor_annual * 0.30) + s_maint
     else:
         s_primary = primary_val * 0.30  
@@ -252,43 +254,24 @@ elif st.session_state.page == 'calculator':
 
     # --- THE GRAPH SECTION ---
     st.markdown("### Cumulative 12-Month Cost Comparison")
-    
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
-    # Incorporate tool change costs into the annual burden for Subtractive
-    tool_change_burden = (tool_changes * cost_per_change) if calc_mode == 'Subtractive' else 0
-    current_annual_burden = (current_maint + primary_val + tool_change_burden + lub_volume_annually + labor_annual + disposal_annual)
+    # Calculate Burden: Including the calculated tool spend and change labor
+    tool_change_labor_burden = (tool_changes * cost_per_change) if calc_mode == 'Subtractive' else 0
+    current_annual_burden = (current_maint + primary_val + tool_change_labor_burden + lub_volume_annually + labor_annual + disposal_annual)
     projected_annual_burden = current_annual_burden - total_savings
 
-    # Build the data points
     current_trend = [(current_annual_burden/12)*i for i in range(1,13)]
     projected_trend = [(projected_annual_burden/12)*i for i in range(1,13)]
 
     fig = go.Figure()
-    
-    # Current Cost Line
-    fig.add_trace(go.Scatter(
-        x=months, y=current_trend, 
-        name="Current Process", 
-        line=dict(color='#8e44ad', width=4, dash='dot')
-    ))
-    
-    # Consultant Lubricants Line
-    fig.add_trace(go.Scatter(
-        x=months, y=projected_trend, 
-        name="Consultant Lubricants", 
-        line=dict(color='#00b5ad', width=5), 
-        fill='tonexty', 
-        fillcolor='rgba(0, 181, 173, 0.1)'
-    ))
+    fig.add_trace(go.Scatter(x=months, y=current_trend, name="Current Process", line=dict(color='#8e44ad', width=4, dash='dot')))
+    fig.add_trace(go.Scatter(x=months, y=projected_trend, name="Consultant Lubricants", line=dict(color='#00b5ad', width=5), 
+                             fill='tonexty', fillcolor='rgba(0, 181, 173, 0.1)'))
     
     fig.update_layout(
-        template="plotly_dark", 
-        paper_bgcolor='rgba(0,0,0,0)', 
-        plot_bgcolor='rgba(0,0,0,0)',
-        height=450,
-        margin=dict(l=20, r=20, t=50, b=20),
-        font=dict(color="#ffffff"),
+        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        height=450, margin=dict(l=20, r=20, t=50, b=20), font=dict(color="#ffffff"),
         xaxis=dict(tickfont=dict(color="#ffffff"), showgrid=False),
         yaxis=dict(tickfont=dict(color="#ffffff"), title="Cumulative Spend ($)", showgrid=True, gridcolor="#30363d"),
         legend=dict(font=dict(color="#ffffff"), orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
