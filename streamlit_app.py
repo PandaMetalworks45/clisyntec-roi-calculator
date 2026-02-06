@@ -119,7 +119,7 @@ with st.sidebar:
     st.markdown("---")
     
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
-    st.link_button("View Product Line", "https://consultantlubricants.com/store", use_container_width=True)
+    st.link_button("View Products", "https://consultantlubricants.com/store", use_container_width=True)
     
     st.markdown("---")
     st.caption("Consultant Lubricants, Inc.")
