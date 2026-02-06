@@ -169,11 +169,10 @@ if st.session_state.page == 'menu':
             st.rerun()
 
 # --- 6. PAGE: THE CALCULATOR ---
-# --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
-    if 'calc_type' not in st.session_state:
+    if 'Subtractive' not in st.session_state:
         st.session_state.calc_type = 'Forming'
     
     calc_mode = st.session_state.calc_type
