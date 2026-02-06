@@ -172,7 +172,6 @@ if st.session_state.page == 'menu':
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
-    # 1. Check which mode we are in
     if 'calc_type' not in st.session_state:
         st.session_state.calc_type = 'Forming'
     
@@ -191,7 +190,6 @@ elif st.session_state.page == 'calculator':
         with col1:
             st.subheader("Process Productivity")
             
-            # THE FIX: If mode is Subtractive, show TOOLING
             if calc_mode == 'Subtractive':
                 avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=30.0, key="sub_tool_avg")
                 tool_changes = st.number_input("Annual Tool Changes (#)", value=500, key="sub_t_changes")
@@ -200,11 +198,23 @@ elif st.session_state.page == 'calculator':
                 
                 labor_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_labor_rate")
                 scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=5.0, step=0.1, key="sub_scrap_pct") / 100
+                
+                # Hidden variables for math consistency
+                die_change_total = 0
             
-            # THE FIX: Otherwise (Forming), show DIE COATING
-            else: 
-                primary_val = st.number_input("Annual Die Coating Costs ($)", value=5000.0, key="form_die_costs")
+            else: # FORMING CALCULATOR (WITH NEW DIE CHANGE FIELDS)
+                primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
+                
+                # NEW FIELDS FOR FORMING
+                annual_die_changes = st.number_input("Annual Die Changes (#)", value=50, key="form_die_changes")
+                cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=250.0, key="form_cost_per_die")
+                
+                die_change_total = annual_die_changes * cost_per_die_change
+                st.caption(f"Calculated Annual Changeover Cost: **${die_change_total:,.2f}**")
+                
                 scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=3.0, step=0.1, key="form_scrap_pct") / 100
+                
+                # Hidden variables for math consistency
                 tool_changes = 0
                 labor_per_change = 0
         
@@ -226,7 +236,6 @@ elif st.session_state.page == 'calculator':
         base_annual_cost = primary_val + (tool_changes * labor_per_change) + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
         
-        # Subtractive Savings
         s_tooling = primary_val * 0.25      
         s_labor = (tool_changes * labor_per_change) * 0.25 
         s_fills = current_fills_total * 0.50 
@@ -234,16 +243,19 @@ elif st.session_state.page == 'calculator':
         s_scrap = scrap_burden * 0.30       
         total_savings = s_tooling + s_labor + s_fills + s_adds + s_scrap
         
-    else: # Forming
-        base_annual_cost = primary_val + current_fills_total + annual_additives + disposal_annual
+    else: # FORMING (UPDATED MATH)
+        # Adding the Die Change Total to the Base Cost
+        base_annual_cost = primary_val + die_change_total + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
         
-        # Forming Savings
+        # Savings Estimates
         s_die_life = primary_val * 0.30     
+        s_die_change = die_change_total * 0.30  # Assuming 30% fewer changeovers due to better lubrication
         s_fills = current_fills_total * 0.40 
         s_adds = annual_additives * 0.70    
         s_scrap = scrap_burden * 0.20       
-        total_savings = s_die_life + s_fills + s_adds + s_scrap
+        
+        total_savings = s_die_life + s_die_change + s_fills + s_adds + s_scrap
 
     current_annual_burden = base_annual_cost + scrap_burden
     projected_annual_burden = current_annual_burden - total_savings
