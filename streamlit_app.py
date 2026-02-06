@@ -10,15 +10,21 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. CUSTOM CSS (STAMPING ANIMATION & BRANDED THEME) ---
+# --- 2. CUSTOM CSS (FIXING THE "FLASHBANG" & TEXT COLORS) ---
 def apply_custom_styling():
     st.markdown("""
     <style>
-    /* Main App Background and Font */
+    /* Force Global Dark Background */
     .stApp {
         background: radial-gradient(circle at top right, #8e44ad15, #0e1117 50%),
                     radial-gradient(circle at bottom left, #00b5ad10, #0e1117 50%);
-        color: #ffffff;
+        color: #ffffff !important;
+    }
+
+    /* Fix for Tables and Dataframes to remain Dark */
+    .stTable, [data-testid="stTable"] {
+        background-color: #161b22 !important;
+        color: white !important;
     }
 
     /* Sidebar Styling */
@@ -38,16 +44,17 @@ def apply_custom_styling():
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #8e44ad; /* Swaps to Purple on hover */
+        background-color: #8e44ad;
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);
     }
 
-    /* Input Box Styling */
-    div[data-baseweb="input"] {
+    /* Input Box Styling - Ensure no white backgrounds */
+    div[data-baseweb="input"], [data-testid="stNumberInput"] {
         background-color: #161b22 !important;
         border: 1px solid #30363d !important;
         border-radius: 8px !important;
+        color: white !important;
     }
 
     /* Subheader Accent */
@@ -93,7 +100,6 @@ def apply_custom_styling():
 
 # --- 3. SIDEBAR (CONSTANT BRANDING) ---
 with st.sidebar:
-    # Safe Logo Loader
     image_path = "CLIsyntec WIDE2Main.jpg"
     if os.path.exists(image_path):
         st.image(image_path, use_container_width=True)
@@ -104,7 +110,7 @@ with st.sidebar:
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
     st.link_button("View Product Line", "https://consultantlubricants.com/clisyntec", use_container_width=True)
     st.markdown("---")
-    st.caption("INTERNAL SALES TOOL v2.0")
+    st.caption("INTERNAL SALES TOOL v2.1")
     st.info("Present this to the prospect to quantify 'Total Cost of Ownership' vs Sticker Price.")
 
 # --- 4. SESSION STATE & DATA ---
@@ -135,6 +141,9 @@ if st.session_state.page == 'menu':
 
 # --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
+    # Re-apply styling here to ensure dark theme persistence
+    apply_custom_styling() 
+    
     if st.button("← Back to Menu"):
         st.session_state.page = 'menu'
         st.rerun()
@@ -162,7 +171,6 @@ elif st.session_state.page == 'calculator':
     current_maint = maint_event_cost * maint_frequency
     proj_maint = current_maint * (1 - SAVINGS_RATES["maint_cost"])
     
-    # Savings Breakdown
     s_die = die_coating_costs * SAVINGS_RATES["die_coating"]
     s_vol = lub_volume_annually * SAVINGS_RATES["volume"]
     s_scrap = scrap_rate_cost * SAVINGS_RATES["scrap"]
@@ -171,39 +179,36 @@ elif st.session_state.page == 'calculator':
     
     total_savings = s_die + s_vol + s_scrap + s_labor + s_maint
 
-    # --- DASHBOARD OUTPUT ---
+    # --- DASHBOARD OUTPUT (FIXED TEXT COLORS) ---
     st.markdown("---")
     st.header("Financial Impact Analysis")
     
     d1, d2 = st.columns(2)
     d1.markdown(f"""
         <div style="background: rgba(0, 181, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #00b5ad; text-align: center;">
-            <h3 style="color: #000000; margin: 0; font-size: 1.2rem;">Total Estimated Annual Savings</h3>
+            <h3 style="color: #ffffff; margin: 0; font-size: 1.2rem;">Total Estimated Annual Savings</h3>
             <h1 style="color: #00b5ad; margin: 10px 0; font-size: 3rem;">${total_savings:,.2f}</h1>
         </div>
     """, unsafe_allow_html=True)
     
     d2.markdown(f"""
         <div style="background: rgba(142, 68, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #8e44ad; text-align: center;">
-            <h3 style="color: #000000; margin: 0; font-size: 1.2rem;">Projected ROI</h3>
+            <h3 style="color: #ffffff; margin: 0; font-size: 1.2rem;">Projected ROI</h3>
             <h1 style="color: #8e44ad; margin: 10px 0; font-size: 3rem;">{ (total_savings / (lub_volume_annually if lub_volume_annually > 0 else 1) * 100):.1f}%</h1>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- VISUALIZATION ---
-  # --- VISUALIZATION (CORRECTED) ---
+    # --- VISUALIZATION (CORRECTED LINE LOGIC) ---
     st.markdown("### Cumulative 12-Month Cost Comparison")
     st.write("The gap between the lines represents your total annual savings.")
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
-    # Calculate the total annual burden for the current process
     current_annual_burden = (current_maint + die_coating_costs + lub_volume_annually + labor_annual + disposal_annual)
-    # The projected burden is the current minus the savings found by the calculator
     projected_annual_burden = current_annual_burden - total_savings
 
     fig = go.Figure()
 
-    # Current Process (Higher Line = More Expensive)
+    # Current Process (Higher Line)
     fig.add_trace(go.Scatter(
         x=months, 
         y=[(current_annual_burden/12)*i for i in range(1,13)], 
@@ -211,13 +216,13 @@ elif st.session_state.page == 'calculator':
         line=dict(color='#8e44ad', width=4, dash='dot')
     ))
 
-    # CLISYNTEC Process (Lower Line = Cost Savings)
+    # CLISYNTEC Process (Lower Line)
     fig.add_trace(go.Scatter(
         x=months, 
         y=[(projected_annual_burden/12)*i for i in range(1,13)], 
         name="CLISYNTEC 3900 (Lower Cost)", 
         line=dict(color='#00b5ad', width=5),
-        fill='tonexty', # This shades the area between the lines
+        fill='tonexty',
         fillcolor='rgba(0, 181, 173, 0.1)' 
     ))
     
