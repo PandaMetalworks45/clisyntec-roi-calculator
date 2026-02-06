@@ -3,19 +3,49 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # --- BRANDING & SETUP ---
+# Deep Purple: #8e44ad | Teal/Cyan: #00b5ad | Dark Background: #0e1117
 st.set_page_config(page_title="Consultant Lubricant's TCO Calculator", layout="wide")
-st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
-# --- CUSTOM CSS FOR STAMPING ANIMATION ---
-def apply_press_animation():
+# --- CUSTOM CSS FOR BRANDING & ANIMATION ---
+def apply_custom_styling():
     st.markdown("""
     <style>
+    /* Main App Background and Font */
+    .stApp {
+        background-color: #0e1117;
+        color: #ffffff;
+    }
+
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #161b22 0%, #00b5ad22 100%);
+        border-right: 1px solid #00b5ad;
+    }
+
+    /* Buttons - Using the Teal from the logo */
+    .stButton>button {
+        background-color: #00b5ad;
+        color: white;
+        border-radius: 5px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #8e44ad; /* Swaps to the Purple on hover */
+        transform: scale(1.02);
+    }
+
+    /* Metric Cards Styling */
+    [data-testid="stMetricValue"] {
+        color: #00b5ad;
+    }
+
     /* The Press Ram (Overlay) */
     @keyframes pressStroke {
-        0% { transform: translateY(-100%); }   /* Ram is up */
-        40% { transform: translateY(0%); }     /* Ram slams down (HIT) */
-        60% { transform: translateY(0%); }     /* Dwell time */
-        100% { transform: translateY(-100%); } /* Ram retracts */
+        0% { transform: translateY(-100%); }
+        40% { transform: translateY(0%); }
+        60% { transform: translateY(0%); }
+        100% { transform: translateY(-100%); }
     }
 
     .press-overlay {
@@ -24,14 +54,13 @@ def apply_press_animation():
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: linear-gradient(to bottom, #161b22, #30363d, #161b22);
+        background: linear-gradient(to bottom, #161b22, #8e44ad33, #161b22);
         z-index: 9999;
         animation: pressStroke 1.5s cubic-bezier(0.85, 0, 0.15, 1) forwards;
         pointer-events: none;
-        border-bottom: 5px solid #2563eb; /* Industrial Blue "Die" Edge */
+        border-bottom: 5px solid #00b5ad; 
     }
 
-    /* Content Fade In */
     @keyframes contentReveal {
         0% { opacity: 0; }
         60% { opacity: 0; }
@@ -45,42 +74,45 @@ def apply_press_animation():
     <div class="press-overlay"></div>
     """, unsafe_allow_html=True)
 
+# --- SIDEBAR LOGO & LINKS ---
+with st.sidebar:
+    # Replace 'CLIsyntec WIDE2Main.jpg' with the actual path if hosted, 
+    # or ensure it's in the same folder as your script.
+    st.image("CLIsyntec WIDE2Main.jpg", use_container_width=True)
+    st.markdown("---")
+    st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
+    st.link_button("Full Product Catalog", "https://consultantlubricants.com/clisyntec", use_container_width=True)
+    st.markdown("---")
+    st.info("Sales Tool: Use these inputs to demonstrate the TCO value of CLISYNTEC 3900.")
+
 # Initialize Session State
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
 
-# --- WEBSITE CONSTANTS (From HTML Script) ---
 SAVINGS_RATES = {
-    "die_coating": 0.30,
-    "dilution": 0.50,
-    "volume": 0.50,
-    "scrap": 0.30,
-    "maint_cost": 0.30,
-    "cleaning_time": 0.50,
-    "downtime": 0.20,
-    "labor": 0.30,
-    "disposal": 0.30,
-    "unit_cost": 0.10
+    "die_coating": 0.30, "dilution": 0.50, "volume": 0.50, "scrap": 0.30,
+    "maint_cost": 0.30, "cleaning_time": 0.50, "downtime": 0.20,
+    "labor": 0.30, "disposal": 0.30, "unit_cost": 0.10
 }
 
 # --- PAGE 1: THE WELCOME MENU ---
 if st.session_state.page == 'menu':
-    apply_press_animation() # Trigger the press on page load
+    apply_custom_styling()
     st.title("Consultant Lubricant's TCO Calculator")
+    st.subheader("Select your process to begin the ROI analysis")
     st.markdown("---")
-    col1, col2, col3 = st.columns(3)
+    
+    col1, col2 = st.columns(2)
     with col1:
-        if st.button("Forming Calculator", use_container_width=True):
+        if st.button("Forming / Stamping Calculator", use_container_width=True):
             st.session_state.page = 'calculator'
             st.rerun()
     with col2:
-        if st.button("Subtracting Calculator", use_container_width=True):
+        if st.button("Subtractive / Machining Calculator", use_container_width=True):
             st.session_state.page = 'calculator' 
             st.rerun()
-    with col3:
-        st.link_button("View All Products", "https://consultantlubricants.com/clisyntec", use_container_width=True)
 
-# --- PAGE 2: THE CALCULATOR (Synced with HTML) ---
+# --- PAGE 2: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
     if st.button("← Back to Menu"):
         st.session_state.page = 'menu'
@@ -89,14 +121,12 @@ elif st.session_state.page == 'calculator':
     st.title("Lubricant Cost Comparison")
     st.markdown("Compare existing costs with projected savings from **3900 Stamping Lubricant**.")
 
-    # --- INPUTS (Matched to HTML IDs) ---
+    # --- INPUTS ---
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("Core Process Metrics")
         die_coating_costs = st.number_input("Die Coating Costs ($)", value=5000.0)
         lub_volume_annually = st.number_input("Lubricant Volume Annually (gal)", value=1000.0)
-        dilution_input = st.text_input("Dilution at Press (X:Y)", value="4:1")
         scrap_rate = st.number_input("Scrap Rate (%)", value=5.0)
         cost_per_unit = st.number_input("Cost Per Unit / Blank ($)", value=0.50)
 
@@ -104,72 +134,42 @@ elif st.session_state.page == 'calculator':
         st.subheader("Maintenance & Labor")
         press_maint_costs = st.number_input("Cost per Press Maintenance ($)", value=2500.0)
         labor_costs = st.number_input("Labor Costs ($)", value=5000.0)
-        cleaning_time_per = st.number_input("Time per Cleaning (hrs)", value=150.0)
-        downtime_per = st.number_input("Avg. Downtime per Maintenance (hrs)", value=80.0)
         disposal_costs = st.number_input("Disposal Costs ($)", value=750.0)
+        maint_frequency = st.number_input("Annual Maintenance Frequency", value=4)
 
-    st.markdown("---")
-    col3, col4 = st.columns(2)
-    with col3:
-        st.subheader("Time-Related Metrics")
-        annual_cleanings = st.number_input("Annual Cleanings (times/year)", value=10)
-        maint_frequency = st.number_input("Annual Maintenance Frequency (times/year)", value=4)
-
-    # --- CALCULATION ENGINE (Forming Calculator Section) ---
-    
-    # 1. Monetary Calculations
+    # --- CALCULATION ENGINE ---
     curr_maint_annual = press_maint_costs * maint_frequency
     proj_maint_annual = curr_maint_annual * (1 - SAVINGS_RATES["maint_cost"])
     
-    # Savings breakdown
-    savings_die = die_coating_costs * SAVINGS_RATES["die_coating"]
-    savings_vol = lub_volume_annually * SAVINGS_RATES["volume"] # Note: website treats volume as a direct monetary save in your JS logic
-    savings_labor = labor_costs * SAVINGS_RATES["labor"]
-    savings_disposal = disposal_costs * SAVINGS_RATES["disposal"]
-    savings_unit = cost_per_unit * SAVINGS_RATES["unit_cost"]
-    savings_maint = curr_maint_annual - proj_maint_annual
-
-    total_monetary_savings = savings_die + savings_vol + savings_labor + savings_disposal + savings_unit + savings_maint
-
-    # 2. Time Calculations
-    curr_cleaning_hrs = cleaning_time_per * annual_cleanings
-    proj_cleaning_hrs = curr_cleaning_hrs * (1 - SAVINGS_RATES["cleaning_time"])
-    
-    curr_downtime_hrs = downtime_per * maint_frequency
-    proj_downtime_hrs = curr_downtime_hrs * (1 - SAVINGS_RATES["downtime"])
-
-    total_time_savings = (curr_cleaning_hrs - proj_cleaning_hrs) + (curr_downtime_hrs - proj_downtime_hrs)
+    savings_total = (die_coating_costs * SAVINGS_RATES["die_coating"]) + \
+                    (lub_volume_annually * SAVINGS_RATES["volume"]) + \
+                    (labor_costs * SAVINGS_RATES["labor"]) + \
+                    (disposal_costs * SAVINGS_RATES["disposal"]) + \
+                    (curr_maint_annual - proj_maint_annual)
 
     # --- OUTPUT DASHBOARD ---
+    st.markdown("---")
     st.header("Projected Savings with 3900")
-    res1, res2 = st.columns(2)
-    res1.metric("Estimated Total Annual Savings", f"${total_monetary_savings:,.2f}", delta_color="normal")
-    res2.metric("Estimated Total Time Savings", f"{total_time_savings:,.1f} hrs", delta_color="normal")
+    st.metric("Estimated Total Annual Savings", f"${savings_total:,.2f}")
 
-    # Comparison Table
-    comparison_data = {
-        "Metric": ["Press Maintenance (Annual)", "Die Coating", "Lubricant Volume (Value)", "Labor Costs", "Disposal Costs", "Scrap Rate (%)"],
-        "Current": [curr_maint_annual, die_coating_costs, lub_volume_annually, labor_costs, disposal_costs, scrap_rate],
-        "With 3900": [proj_maint_annual, die_coating_costs * 0.7, lub_volume_annually * 0.5, labor_costs * 0.7, disposal_costs * 0.7, scrap_rate * 0.7],
-        "Total Savings": [savings_maint, savings_die, savings_vol, savings_labor, savings_disposal, "30% Reduction"]
-    }
-    
-    df = pd.DataFrame(comparison_data)
-    st.table(df)
-
-    # --- TCO VISUALIZATION ---
+    # --- CHART WITH LOGO COLORS ---
     st.subheader("12-Month Cumulative Cost Comparison")
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
-    # Totals for plotting
     current_annual_total = curr_maint_annual + die_coating_costs + lub_volume_annually + labor_costs + disposal_costs
-    projected_annual_total = current_annual_total - total_monetary_savings
+    projected_annual_total = current_annual_total - savings_total
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=months, y=[(current_annual_total/12)*i for i in range(1,13)], name="Current Costs", line=dict(color='#FF4B4B')))
-    fig.add_trace(go.Scatter(x=months, y=[(projected_annual_total/12)*i for i in range(1,13)], name="3900 Projected Costs", line=dict(color='#00CC96')))
+    # Current Costs in Purple
+    fig.add_trace(go.Scatter(x=months, y=[(current_annual_total/12)*i for i in range(1,13)], 
+                             name="Current Costs", line=dict(color='#8e44ad', width=4)))
+    # Projected Costs in Teal
+    fig.add_trace(go.Scatter(x=months, y=[(projected_annual_total/12)*i for i in range(1,13)], 
+                             name="3900 Projected Costs", line=dict(color='#00b5ad', width=4)))
+    
+    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
-# --- SHARED PROPRIETARY FOOTER ---
+# --- FOOTER ---
 st.markdown("---")
-st.caption("PROPRIETARY TOOL: © 2026 Consultant Lubricants, Inc. Internal formulas synced with Web-Forming Calculator 3900-v1.")
+st.caption("PROPRIETARY TOOL: © 2026 Consultant Lubricants, Inc. | CLISYNTEC™ Process Fluids")
