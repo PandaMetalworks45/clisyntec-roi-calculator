@@ -151,7 +151,6 @@ SAVINGS_RATES = {
 }
 
 # --- 5. PAGE: WELCOME MENU ---
-# --- 5. PAGE: WELCOME MENU ---
 if st.session_state.page == 'menu':
     apply_custom_styling()
     st.title("Consultant Lubricant's TCO Calculator")
@@ -169,6 +168,7 @@ if st.session_state.page == 'menu':
             st.session_state.calc_type = 'Subtractive'
             st.rerun()
 
+# --- 6. PAGE: THE CALCULATOR ---
 # --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
@@ -193,6 +193,11 @@ elif st.session_state.page == 'calculator':
             st.subheader("Process Productivity")
             if calc_mode == 'Subtractive':
                 primary_val = st.number_input("Annual Tooling / Insert Spend ($)", value=15000.0, key="sub_tool")
+                
+                # NEW: Annual Tool Change Section
+                tool_changes = st.number_input("Annual Tool Changes (#)", value=500, key="sub_t_changes")
+                cost_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_cost")
+                
                 lub_volume_annually = st.number_input("Annual Coolant Concentrate Spend ($)", value=8000.0, key="sub_lub")
                 scrap_rate_cost = st.number_input("Annual Part Rejection/Rework Cost ($)", value=5000.0, key="sub_scrap")
             else:
@@ -212,15 +217,18 @@ elif st.session_state.page == 'calculator':
     current_maint = maint_event_cost * maint_frequency
     
     if calc_mode == 'Subtractive':
-        s_primary = primary_val * 0.25  
+        s_primary = primary_val * 0.25  # 25% Tool life improvement
+        # Calculate Tool Change Savings (25% reduction in changes)
+        s_tool_labor = (tool_changes * cost_per_change) * 0.25 
         s_vol = lub_volume_annually * 0.20 
         s_maint = current_maint * 0.50     
+        # Added s_tool_labor to total
+        total_savings = s_primary + s_tool_labor + s_vol + (scrap_rate_cost * 0.30) + (labor_annual * 0.30) + s_maint
     else:
         s_primary = primary_val * 0.30  
         s_vol = lub_volume_annually * 0.50 
         s_maint = current_maint * 0.30     
-
-    total_savings = s_primary + s_vol + (scrap_rate_cost * 0.30) + (labor_annual * 0.30) + s_maint
+        total_savings = s_primary + s_vol + (scrap_rate_cost * 0.30) + (labor_annual * 0.30) + s_maint
 
     # --- DASHBOARD OUTPUT (SAVINGS & ROI) ---
     st.markdown("---")
@@ -246,7 +254,10 @@ elif st.session_state.page == 'calculator':
     st.markdown("### Cumulative 12-Month Cost Comparison")
     
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    current_annual_burden = (current_maint + primary_val + lub_volume_annually + labor_annual + disposal_annual)
+    
+    # Incorporate tool change costs into the annual burden for Subtractive
+    tool_change_burden = (tool_changes * cost_per_change) if calc_mode == 'Subtractive' else 0
+    current_annual_burden = (current_maint + primary_val + tool_change_burden + lub_volume_annually + labor_annual + disposal_annual)
     projected_annual_burden = current_annual_burden - total_savings
 
     # Build the data points
@@ -283,7 +294,6 @@ elif st.session_state.page == 'calculator':
         legend=dict(font=dict(color="#ffffff"), orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
 
-    # Force the render
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 # --- 7. FOOTER ---
