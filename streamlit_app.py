@@ -106,52 +106,29 @@ with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # We convert the image to data so it can live INSIDE the button label
-        img_data = get_base64_of_bin_file(image_path)
+        # This converts image to clickable HTML
+        img_base64 = get_base64_of_bin_file(image_path)
         
-        # This is the single button. The 'label' is the HTML <img> tag.
-        # Clicking any part of this image triggers the page change.
-        if st.button(label="Click for Menu", key="image_as_button", use_container_width=True):
+        # WE CREATE AN HTML BUTTON THAT LOOKS LIKE THE IMAGE
+        # When clicked, it refreshes the page with the query param 'reset'
+        html_code = f'''
+            <a href="/?nav=menu" target="_self" style="text-decoration: none;">
+                <img src="data:image/jpeg;base64,{img_base64}" style="width: 100%; cursor: pointer;">
+            </a>
+        '''
+        st.markdown(html_code, unsafe_allow_html=True)
+        
+        # Check if the URL tells us to go home
+        params = st.query_params
+        if params.get("nav") == "menu":
+            st.session_state.page = 'menu'
+            # Clear params so it doesn't loop
+            st.query_params.clear()
+            st.rerun()
+    else:
+        if st.button("MAIN MENU", use_container_width=True):
             st.session_state.page = 'menu'
             st.rerun()
-
-        # CSS to hide the "Click for Menu" text and fill the button with the image
-        st.markdown(f"""
-            <style>
-            /* Target the specific button by its key */
-            div[data-testid="stSidebar"] button[key="image_as_button"] {{
-                height: auto;
-                padding: 0px !important;
-                border: none !important;
-                background: transparent !important;
-                color: transparent !important; /* Hides the text label */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }}
-            
-            /* Insert the image as the background of the button */
-            div[data-testid="stSidebar"] button[key="image_as_button"]::before {{
-                content: "";
-                background-image: url("data:image/jpeg;base64,{img_data}");
-                background-size: contain;
-                background-repeat: no-repeat;
-                background-position: center;
-                width: 100%;
-                height: 200px; /* Adjust this to the height of your logo */
-                display: block;
-            }}
-
-            /* Remove the hover box effect to keep it clean */
-            div[data-testid="stSidebar"] button[key="image_as_button"]:hover {{
-                border: none !important;
-                background: transparent !important;
-                opacity: 0.8; /* Subtle visual cue that it is a button */
-            }}
-            </style>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("Logo missing")
 
     st.markdown("---")
     
