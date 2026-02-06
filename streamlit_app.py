@@ -169,11 +169,10 @@ if st.session_state.page == 'menu':
             st.rerun()
 
 # --- 6. PAGE: THE CALCULATOR ---
-# --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
-    # FIX: Check for the KEY, not the VALUE
+    # 1. Check which mode we are in
     if 'calc_type' not in st.session_state:
         st.session_state.calc_type = 'Forming'
     
@@ -191,21 +190,21 @@ elif st.session_state.page == 'calculator':
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Process Productivity")
+            
+            # THE FIX: If mode is Subtractive, show TOOLING
             if calc_mode == 'Subtractive':
                 avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=30.0, key="sub_tool_avg")
                 tool_changes = st.number_input("Annual Tool Changes (#)", value=500, key="sub_t_changes")
-                
-                # Math for Subtractive Productivity
                 primary_val = avg_tool_cost * tool_changes
                 st.caption(f"Calculated Annual Tool Spend: **${primary_val:,.2f}**")
                 
                 labor_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_labor_rate")
                 scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=5.0, step=0.1, key="sub_scrap_pct") / 100
             
-            else: # FORMING CALCULATOR (RESTORED)
+            # THE FIX: Otherwise (Forming), show DIE COATING
+            else: 
                 primary_val = st.number_input("Annual Die Coating Costs ($)", value=5000.0, key="form_die_costs")
                 scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=3.0, step=0.1, key="form_scrap_pct") / 100
-                # Set defaults for variables not used in Forming so math doesn't break
                 tool_changes = 0
                 labor_per_change = 0
         
@@ -213,7 +212,6 @@ elif st.session_state.page == 'calculator':
             st.subheader("Maintenance & Fluid Costs")
             fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Press Fill ($)"
             
-            # Use unique keys based on calc_mode so values don't overwrite each other
             fill_cost = st.number_input(fill_label, value=1200.0, key=f"{calc_mode}_fill_val")
             fill_frequency = st.number_input("Fills Per Year", value=4, key=f"{calc_mode}_freq_val")
             
@@ -225,30 +223,26 @@ elif st.session_state.page == 'calculator':
     current_fills_total = fill_cost * fill_frequency
     
     if calc_mode == 'Subtractive':
-        # Subtractive Total Cost
         base_annual_cost = primary_val + (tool_changes * labor_per_change) + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
         
-        # Savings Estimates for Machining
-        s_tooling = primary_val * 0.25      # 25% Tool Life Improvement
+        # Subtractive Savings
+        s_tooling = primary_val * 0.25      
         s_labor = (tool_changes * labor_per_change) * 0.25 
-        s_fills = current_fills_total * 0.50 # 50% better sump life
-        s_adds = annual_additives * 0.80    # 80% reduction in additives
-        s_scrap = scrap_burden * 0.30       # 30% scrap reduction
-        
+        s_fills = current_fills_total * 0.50 
+        s_adds = annual_additives * 0.80    
+        s_scrap = scrap_burden * 0.30       
         total_savings = s_tooling + s_labor + s_fills + s_adds + s_scrap
         
-    else: # FORMING CALCULATOR LOGIC
-        # Forming Total Cost
+    else: # Forming
         base_annual_cost = primary_val + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
         
-        # Savings Estimates for Stamping/Forming
-        s_die_life = primary_val * 0.30     # 30% reduction in coating/polishing
-        s_fills = current_fills_total * 0.40 # 40% reduction in reservoir changes
-        s_adds = annual_additives * 0.70    # 70% reduction in additives
-        s_scrap = scrap_burden * 0.20       # 20% scrap reduction
-        
+        # Forming Savings
+        s_die_life = primary_val * 0.30     
+        s_fills = current_fills_total * 0.40 
+        s_adds = annual_additives * 0.70    
+        s_scrap = scrap_burden * 0.20       
         total_savings = s_die_life + s_fills + s_adds + s_scrap
 
     current_annual_burden = base_annual_cost + scrap_burden
