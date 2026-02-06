@@ -191,12 +191,11 @@ elif st.session_state.page == 'calculator':
             st.subheader("Process Productivity")
             
             if calc_mode == 'Subtractive':
-                avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=30.0, key="sub_tool_avg")
-                tool_changes = st.number_input("Annual Tool Changes (#)", value=500, key="sub_t_changes")
+                avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=300.0, key="sub_tool_avg")
+                tool_changes = st.number_input("Annual Tool Changes (#)", value=150, key="sub_t_changes")
                 primary_val = avg_tool_cost * tool_changes
                 st.caption(f"Calculated Annual Tool Spend: **${primary_val:,.2f}**")
                 
-                labor_per_change = st.number_input("Labor/Downtime per Change ($)", value=25.0, key="sub_t_labor_rate")
                 scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=5.0, step=0.1, key="sub_scrap_pct") / 100
                 
                 # Hidden variables for math consistency
@@ -206,8 +205,8 @@ elif st.session_state.page == 'calculator':
                 primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
                 
                 # NEW FIELDS FOR FORMING
-                annual_die_changes = st.number_input("Annual Die Changes (#)", value=50, key="form_die_changes")
-                cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=250.0, key="form_cost_per_die")
+                annual_die_changes = st.number_input("Annual Die Changes (#)", value=24, key="form_die_changes")
+                cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=200, key="form_cost_per_die")
                 
                 die_change_total = annual_die_changes * cost_per_die_change
                 st.caption(f"Calculated Annual Changeover Cost: **${die_change_total:,.2f}**")
@@ -216,16 +215,15 @@ elif st.session_state.page == 'calculator':
                 
                 # Hidden variables for math consistency
                 tool_changes = 0
-                labor_per_change = 0
         
         with col2:
             st.subheader("Maintenance & Fluid Costs")
-            fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Press Fill ($)"
+            fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Sump Fill ($)"
             
-            fill_cost = st.number_input(fill_label, value=1200.0, key=f"{calc_mode}_fill_val")
-            fill_frequency = st.number_input("Fills Per Year", value=4, key=f"{calc_mode}_freq_val")
+            fill_cost = st.number_input(fill_label, value=1000, key=f"{calc_mode}_fill_val")
+            fill_frequency = st.number_input("Fills Per Year", value=6, key=f"{calc_mode}_freq_val")
             
-            monthly_adds = st.number_input("Monthly Additives Cost ($)", value=150.0, key=f"{calc_mode}_adds_val")
+            monthly_adds = st.number_input("Monthly Additives Cost ($)", value=300, key=f"{calc_mode}_adds_val")
             annual_additives = monthly_adds * 12
             disposal_annual = st.number_input("Annual Disposal Fees ($)", value=1500.0, key=f"{calc_mode}_disp_val")
 
@@ -233,11 +231,11 @@ elif st.session_state.page == 'calculator':
     current_fills_total = fill_cost * fill_frequency
     
     if calc_mode == 'Subtractive':
-        base_annual_cost = primary_val + (tool_changes * labor_per_change) + current_fills_total + annual_additives + disposal_annual
+        base_annual_cost = primary_val + (tool_changes) + current_fills_total + annual_additives + disposal_annual
         scrap_burden = base_annual_cost * scrap_rate_pct
         
         s_tooling = primary_val * 0.25      
-        s_labor = (tool_changes * labor_per_change) * 0.25 
+        s_labor = (tool_changes) * 0.25 
         s_fills = current_fills_total * 0.50 
         s_adds = annual_additives * 0.80    
         s_scrap = scrap_burden * 0.30       
