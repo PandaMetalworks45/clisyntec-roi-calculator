@@ -92,16 +92,23 @@ def apply_custom_styling():
     <div class="press-overlay"></div>
     """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (LINKED LOGO & CONTACT INFO) ---
 with st.sidebar:
+    # URL for your home page
+    home_url = "https://consultantlubricants.com/"
     image_path = "CLIsyntec WIDE2Main.jpg"
+    
     if os.path.exists(image_path):
-        st.image(image_path, use_container_width=True)
+        # We wrap the image in a link and disable the fullscreen 'zoom' button
+        st.logo(image_path, link=home_url) # This is the cleanest way for sidebars
+        # If st.logo isn't available in your version, use this instead:
+        # st.image(image_path, use_container_width=True)
     else:
-        st.title("CLISYNTEC™")
+        st.markdown(f"### [Copyright © 2026 Consultant Lubricants, Inc.  All rights reserved.]({https://consultantlubricants.com})")
+    
     st.markdown("---")
     
-    # These buttons will now have black text based on the CSS above
+    # Buttons with Black Text (per previous CSS)
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
     st.link_button("View Product Line", "https://consultantlubricants.com/clisyntec", use_container_width=True)
     
