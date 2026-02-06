@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # --- BRANDING & SETUP ---
-st.set_page_config(page_title="Consultant Lubricant's Master ROI Calculator", layout="wide")
+st.set_page_config(page_title="Consultant Lubricant's TCO Calculator", layout="wide")
 st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
 # --- CUSTOM CSS FOR STAMPING ANIMATION ---
@@ -26,7 +26,7 @@ def apply_press_animation():
         height: 100vh;
         background: linear-gradient(to bottom, #161b22, #30363d, #161b22);
         z-index: 9999;
-        animation: pressStroke 1.2s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+        animation: pressStroke 1.5s cubic-bezier(0.85, 0, 0.15, 1) forwards;
         pointer-events: none;
         border-bottom: 5px solid #2563eb; /* Industrial Blue "Die" Edge */
     }
@@ -66,7 +66,7 @@ SAVINGS_RATES = {
 # --- PAGE 1: THE WELCOME MENU ---
 if st.session_state.page == 'menu':
     apply_press_animation() # Trigger the press on page load
-    st.title("Welcome to CLISYNTEC'S TCO Calculator!")
+    st.title("Consultant Lubricant's TCO Calculator")
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
     with col1:
