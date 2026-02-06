@@ -169,20 +169,36 @@ SAVINGS_RATES = {
 # --- 5. PAGE: WELCOME MENU ---
 if st.session_state.page == 'menu':
     apply_custom_styling()
-    st.title("Consultant Lubricant's TCO Calculator")
-    st.write("Select a process below to start the financial comparison.")
+    
+    # Title and Subtitle (Keep these centered)
+    st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Select a process to start the financial comparison.</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- THIS IS WHERE THE STACKED BUTTONS GO ---
+    st.markdown('<div class="menu-btn-container">', unsafe_allow_html=True)
+    
+    # First Big Button
+    if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
+        st.session_state.page = 'calculator'
+        st.session_state.calc_type = 'Forming'
+        st.rerun()
+        
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Second Big Button
+    if st.button("⚙️\n\nSUBTRACTIVE CALCULATOR", use_container_width=True):
+        st.session_state.page = 'calculator'
+        st.session_state.calc_type = 'Subtractive'
+        st.rerun()
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+    # --- END OF STACKED BUTTONS ---
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("---")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("FORMING CALCULATOR", use_container_width=True):
-            st.session_state.page = 'calculator'
-            st.session_state.calc_type = 'Forming'
-            st.rerun()
-    with col2:
-        if st.button("SUBTRACTIVE CALCULATOR", use_container_width=True):
-            st.session_state.page = 'calculator'
-            st.session_state.calc_type = 'Subtractive'
-            st.rerun()
+
+    # The Slider/Carousel section usually follows right after this...
 
 # --- 6. PAGE: THE CALCULATOR ---
 elif st.session_state.page == 'calculator':
