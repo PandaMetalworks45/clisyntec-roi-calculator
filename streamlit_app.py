@@ -106,61 +106,52 @@ with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # We wrap both the button and the image in a div to control the stack
-        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
+        # We convert the image to data so it can live INSIDE the button label
+        img_data = get_base64_of_bin_file(image_path)
         
-        # 1. The invisible button
-        if st.button(" ", key="logo_nav_button", use_container_width=True):
+        # This is the single button. The 'label' is the HTML <img> tag.
+        # Clicking any part of this image triggers the page change.
+        if st.button(label="Click for Menu", key="image_as_button", use_container_width=True):
             st.session_state.page = 'menu'
             st.rerun()
 
-        # 2. The image that sits behind it
-        st.markdown(f'''
-                <div class="logo-image-container">
-                    <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%;">
-                </div>
-            </div>
-        ''', unsafe_allow_html=True)
-        
-        # 3. CSS to stretch the button over the entire image area
-        st.markdown("""
+        # CSS to hide the "Click for Menu" text and fill the button with the image
+        st.markdown(f"""
             <style>
-            /* Position the wrapper */
-            .logo-wrapper {
-                position: relative;
+            /* Target the specific button by its key */
+            div[data-testid="stSidebar"] button[key="image_as_button"] {{
+                height: auto;
+                padding: 0px !important;
+                border: none !important;
+                background: transparent !important;
+                color: transparent !important; /* Hides the text label */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            
+            /* Insert the image as the background of the button */
+            div[data-testid="stSidebar"] button[key="image_as_button"]::before {{
+                content: "";
+                background-image: url("data:image/jpeg;base64,{img_data}");
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
                 width: 100%;
-            }
+                height: 200px; /* Adjust this to the height of your logo */
+                display: block;
+            }}
 
-            /* Make the button invisible and stretch it to cover everything */
-            div[data-testid="stSidebar"] .stButton button {
-                position: absolute !important;
-                top: 0;
-                left: 0;
-                width: 100% !important;
-                height: 180px !important; /* Force the height to match a large logo */
-                background-color: transparent !important;
+            /* Remove the hover box effect to keep it clean */
+            div[data-testid="stSidebar"] button[key="image_as_button"]:hover {{
                 border: none !important;
-                z-index: 10 !important;
-                color: transparent !important;
-            }
-
-            /* Ensure no weird hover outlines on the invisible button */
-            div[data-testid="stSidebar"] .stButton button:hover {
-                background-color: rgba(255, 255, 255, 0.03) !important;
-                border: none !important;
-            }
-
-            /* Push the image into the correct visual slot */
-            .logo-image-container {
-                margin-top: 0px;
-                pointer-events: none;
-            }
+                background: transparent !important;
+                opacity: 0.8; /* Subtle visual cue that it is a button */
+            }}
             </style>
         """, unsafe_allow_html=True)
     else:
-        if st.button("Main Menu", use_container_width=True):
-            st.session_state.page = 'menu'
-            st.rerun()
+        st.error("Logo missing")
 
     st.markdown("---")
     
