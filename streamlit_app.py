@@ -103,18 +103,26 @@ def apply_custom_styling():
 
 # --- 3. SIDEBAR (LARGE LINKED LOGO & CONTACT INFO) ---
 with st.sidebar:
-    home_url = "https://consultantlubricants.com/"
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # Large Logo that takes you home and has no fullscreen button
+        # We use a button that triggers the 'menu' state
+        # The key="logo_btn" ensures Streamlit tracks this specific click
+        if st.button("Return to Main Menu", key="logo_btn", use_container_width=True):
+            st.session_state.page = 'menu'
+            st.rerun()
+            
+        # Display the Large Logo immediately under the button
         st.markdown(f'''
-            <a href="{home_url}" target="_self">
-                <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%;">
-            </a>
+            <div style="margin-top: 10px;">
+                <img src="data:image/jpeg;base64,{get_base64_of_bin_file(image_path)}" style="width:100%; border-radius: 5px;">
+            </div>
         ''', unsafe_allow_html=True)
     else:
-        st.markdown(f"### [CLISYNTEC™]({home_url})")
+        # Fallback if image is missing
+        if st.button("Main Menu", use_container_width=True):
+            st.session_state.page = 'menu'
+            st.rerun()
     
     st.markdown("---")
     
