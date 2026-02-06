@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # --- BRANDING & SETUP ---
-st.set_page_config(page_title="CLISYNTEC Master ROI Calculator", layout="wide")
+st.set_page_config(page_title="Consultant Lubricant's Master ROI Calculator", layout="wide")
 st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
 # --- CUSTOM CSS FOR STAMPING ANIMATION ---
