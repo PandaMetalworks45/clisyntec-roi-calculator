@@ -123,7 +123,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.caption("Consultant Lubricants, Inc.")
-    st.caption("9 Research Park Dr, St. Peters)
+    st.caption("9 Research Park Dr, St. Peters")
 
 # --- 4. SESSION STATE & DATA ---
 if 'page' not in st.session_state:
