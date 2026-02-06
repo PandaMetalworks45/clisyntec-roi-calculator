@@ -191,22 +191,41 @@ elif st.session_state.page == 'calculator':
     """, unsafe_allow_html=True)
 
     # --- VISUALIZATION ---
-    st.markdown("### Cumulative 12-Month Savings Projection")
+  # --- VISUALIZATION (CORRECTED) ---
+    st.markdown("### Cumulative 12-Month Cost Comparison")
+    st.write("The gap between the lines represents your total annual savings.")
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
-    current_baseline = (current_maint + die_coating_costs + lub_volume_annually + labor_annual + disposal_annual)
-    projected_baseline = current_baseline - total_savings
+    # Calculate the total annual burden for the current process
+    current_annual_burden = (current_maint + die_coating_costs + lub_volume_annually + labor_annual + disposal_annual)
+    # The projected burden is the current minus the savings found by the calculator
+    projected_annual_burden = current_annual_burden - total_savings
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=months, y=[(current_baseline/12)*i for i in range(1,13)], 
-                             name="Current Process", line=dict(color='#8e44ad', width=4, dash='dot')))
-    fig.add_trace(go.Scatter(x=months, y=[(projected_baseline/12)*i for i in range(1,13)], 
-                             name="CLISYNTEC Process", line=dict(color='#00b5ad', width=5)))
+
+    # Current Process (Higher Line = More Expensive)
+    fig.add_trace(go.Scatter(
+        x=months, 
+        y=[(current_annual_burden/12)*i for i in range(1,13)], 
+        name="Current Process (Higher Cost)", 
+        line=dict(color='#8e44ad', width=4, dash='dot')
+    ))
+
+    # CLISYNTEC Process (Lower Line = Cost Savings)
+    fig.add_trace(go.Scatter(
+        x=months, 
+        y=[(projected_annual_burden/12)*i for i in range(1,13)], 
+        name="CLISYNTEC 3900 (Lower Cost)", 
+        line=dict(color='#00b5ad', width=5),
+        fill='tonexty', # This shades the area between the lines
+        fillcolor='rgba(0, 181, 173, 0.1)' 
+    ))
     
     fig.update_layout(
         template="plotly_dark", 
         paper_bgcolor='rgba(0,0,0,0)', 
         plot_bgcolor='rgba(0,0,0,0)',
+        yaxis_title="Cumulative Spend ($)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig, use_container_width=True)
