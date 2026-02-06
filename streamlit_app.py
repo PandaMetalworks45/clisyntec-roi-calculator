@@ -66,7 +66,7 @@ def apply_custom_styling():
     .menu-btn-container .stButton>button {
         height: 200px !important;
         width: 100% !important;
-        max-width: 800px !important; /* Prevents it from stretching too far on wide screens */
+        max-width: 600px !important; /* Prevents it from stretching too far on wide screens */
         margin: 10px auto !important; /* Centers and adds spacing between them */
         display: block !important;
         font-size: 28px !important;
