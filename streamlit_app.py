@@ -178,14 +178,14 @@ elif st.session_state.page == 'calculator':
     d1, d2 = st.columns(2)
     d1.markdown(f"""
         <div style="background: rgba(0, 181, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #00b5ad; text-align: center;">
-            <h3 style="color: #ffffff; margin: 0; font-size: 1.2rem;">Total Estimated Annual Savings</h3>
+            <h3 style="color: #000000; margin: 0; font-size: 1.2rem;">Total Estimated Annual Savings</h3>
             <h1 style="color: #00b5ad; margin: 10px 0; font-size: 3rem;">${total_savings:,.2f}</h1>
         </div>
     """, unsafe_allow_html=True)
     
     d2.markdown(f"""
         <div style="background: rgba(142, 68, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #8e44ad; text-align: center;">
-            <h3 style="color: #ffffff; margin: 0; font-size: 1.2rem;">Projected ROI</h3>
+            <h3 style="color: #000000; margin: 0; font-size: 1.2rem;">Projected ROI</h3>
             <h1 style="color: #8e44ad; margin: 10px 0; font-size: 3rem;">{ (total_savings / (lub_volume_annually if lub_volume_annually > 0 else 1) * 100):.1f}%</h1>
         </div>
     """, unsafe_allow_html=True)
