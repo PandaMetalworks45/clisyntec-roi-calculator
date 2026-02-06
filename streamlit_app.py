@@ -32,37 +32,36 @@ def apply_custom_styling():
         border-right: 1px solid #30363d;
     }
     
-    /* Ensure Sidebar text is white */
-    [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] p, [data-testid="stSidebar"] caption {
+    /* Sidebar text colors */
+    [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] p {
         color: #ffffff !important;
     }
 
-    /* Buttons */
-    .stButton>button {
-        background-color: #00b5ad;
-        color: white !important;
-        border-radius: 8px;
-        border: none;
-        font-weight: bold;
+    /* Buttons - Updated for BLACK TEXT */
+    .stButton>button, .stLinkButton>a {
+        background-color: #00b5ad !important;
+        color: #000000 !important; /* Black Text */
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: bold !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
-    .stButton>button:hover {
-        background-color: #8e44ad;
-        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);
+    
+    .stButton>button:hover, .stLinkButton>a:hover {
+        background-color: #8e44ad !important;
+        color: #ffffff !important; /* Text turns white on hover for contrast */
+        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4) !important;
     }
 
-    /* Input Box Styling */
-    div[data-baseweb="input"], [data-testid="stNumberInput"] input {
-        background-color: #161b22 !important;
-        color: white !important;
-        border: 1px solid #30363d !important;
-    }
-
-    /* Metric Value Subtitles (Small text under metrics) */
+    /* Metric Label Fix */
     [data-testid="stMetricLabel"] {
         color: #ffffff !important;
     }
 
-    /* The Press Ram (Overlay Animation) */
+    /* Animation logic stays the same */
     @keyframes pressStroke {
         0% { transform: translateY(-100%); }
         40% { transform: translateY(0%); }
@@ -101,10 +100,16 @@ with st.sidebar:
     else:
         st.title("CLISYNTEC™")
     st.markdown("---")
+    
+    # These buttons will now have black text based on the CSS above
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
     st.link_button("View Product Line", "https://consultantlubricants.com/clisyntec", use_container_width=True)
+    
     st.markdown("---")
-    st.info("INTERNAL SALES TOOL")
+    # Updated Contact Info Section
+    st.caption("Consultant Lubricants, Inc.")
+    st.caption("9 Research Park Dr, St. Peters, MO 63376")
+    st.caption("636-926-9903")
 
 # --- 4. SESSION STATE & DATA ---
 if 'page' not in st.session_state:
