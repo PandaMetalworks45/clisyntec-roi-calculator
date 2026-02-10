@@ -1,337 +1,113 @@
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import os
-import base64
+import random
+import time
 
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+# --- APP CONFIGURATION ---
+st.set_page_config(page_title="Fun Fishing Frenzy", page_icon="🎣")
 
-# Branding and Browser
-st.set_page_config(
-    page_title="Consultant Lubricant's TCO Calculator", 
-    page_icon="💧",
-    layout="wide"
-)
+# --- INITIALIZE SESSION STATE ---
+if "challenge" not in st.session_state:
+    st.session_state.challenge = None
+if "trophies" not in st.session_state:
+    st.session_state.trophies = []
+if "show_success" not in st.session_state:
+    st.session_state.show_success = False
 
-# Custom CSS
-def apply_custom_styling():
-    st.markdown("""
-    <style>
-    .stApp {
-        background: radial-gradient(circle at top right, #8e44ad15, #0e1117 50%),
-                    radial-gradient(circle at bottom left, #00b5ad10, #0e1117 50%);
-        color: #ffffff !important;
-    }
-
-    /* h1-h6,p,label, .stmarkdown Styling */
-    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, [data-testid="stMetricLabel"] {
-        color: #ffffff !important;
-    }
-
-    button[title="View fullscreen"] {
-        display: none !important;
-    }
-
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #161b22 !important; /* Solid Dark Grey/Black */
-        background-image: none !important;    /* Removes the previous gradient */
-        border-right: 1px solid #30363d;
-        opacity: 1 !important;
-    }
-
-    /* Buttons */
-    .stButton>button, .stLinkButton>a {
-        background-color: #00b5ad !important;
-        color: #000000 !important; 
-        border-radius: 8px !important;
-        border: none !important;
-        font-weight: bold !important;
-        text-decoration: none !important;
-    }
-    
-    .stButton>button:hover, .stLinkButton>a:hover {
-        background-color: #8e44ad !important;
-        color: #ffffff !important; 
-        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4) !important;
-    }
-    
-    .menu-btn-container .stButton>button {
-        height: 200px !important;
-        width: 100% !important;
-        max-width: 600px !important; /* Prevents it from stretching too far on wide screens */
-        margin: 10px auto !important; /* Centers and adds spacing between them */
-        display: block !important;
-        font-size: 28px !important;
-        border: 2px solid #00b5ad !important;
-        transition: all 0.3s ease !important;
-        white-space: pre-wrap !important;
-    }
-    .menu-btn-container .stButton>button:hover {
-        border: 2px solid #8e44ad !important;
-        transform: scale(1.02);
-    }
-
-    /* Input Box Styling */
-    div[data-baseweb="input"], [data-testid="stNumberInput"] input {
-        background-color: #161b22 !important;
-        color: white !important;
-        border: 1px solid #30363d !important;
-    }
-
-    /* Animation Logic */
-    @keyframes pressStroke {
-        0% { transform: translateY(-100%); }
-        40% { transform: translateY(0%); }
-        60% { transform: translateY(0%); }
-        100% { transform: translateY(-100%); }
-    }
-    .press-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: linear-gradient(to bottom, #161b22, #30363d, #161b22);
-        z-index: 9999;
-        animation: pressStroke 1.5s cubic-bezier(0.85, 0, 0.15, 1) forwards;
-        pointer-events: none;
-        border-bottom: 5px solid #00b5ad; 
-    }
-    .stApp {
-        animation: contentReveal 2.2s ease-in;
-    }
-    @keyframes contentReveal {
-        0% { opacity: 0; }
-        60% { opacity: 0; }
-        100% { opacity: 1; }
-    }
-    </style>
-    <div class="press-overlay"></div>
-    """, unsafe_allow_html=True)
-
-# Sidebar
-with st.sidebar:
-    image_path = "CLI_Cap_Label2.jpg"
-    
-    if os.path.exists(image_path):
-        # This converts image to clickable HTML
-        img_base64 = get_base64_of_bin_file(image_path)
-        
-        # WE CREATE AN HTML BUTTON THAT LOOKS LIKE THE IMAGE
-        # When clicked, it refreshes the page with the query param 'reset'
-        html_code = f'''
-            <a href="/?nav=menu" target="_self" style="text-decoration: none;">
-                <img src="data:image/jpeg;base64,{img_base64}" style="width: 100%; cursor: pointer;">
-            </a>
-        '''
-        st.markdown(html_code, unsafe_allow_html=True)
-        
-        # Check if the URL tells us to go home
-        params = st.query_params
-        if params.get("nav") == "menu":
-            st.session_state.page = 'menu'
-            # Clear params so it doesn't loop
-            st.query_params.clear()
-            st.rerun()
-    else:
-        if st.button("MAIN MENU", use_container_width=True):
-            st.session_state.page = 'menu'
-            st.rerun()
-
-    st.markdown("---")
-    
-    st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
-    st.link_button("View Products", "https://consultantlubricants.com/store", use_container_width=True)
-    
-    st.markdown("---")
-    st.caption("Consultant Lubricants, Inc.")
-    st.caption("9 Research Park Dr.")
-    st.caption("St. Peters, MO 63376")
-    st.caption("636.926.9903")
-
-# Session State
-if 'page' not in st.session_state:
-    st.session_state.page = 'menu'
-
-SAVINGS_RATES = {
-    "die_coating": 0.30, "volume": 0.50, "scrap": 0.30,
-    "maint_cost": 0.30, "labor": 0.30, "disposal": 0.30
+# --- STATE-SPECIFIC FISH DATA ---
+# This dictionary maps states to their 10 most common/popular catches
+state_fish_map = {
+    "Missouri": ["Largemouth Bass", "Smallmouth Bass", "Bluegill", "Channel Catfish", "White Crappie", "Black Crappie", "Walleye", "Rainbow Trout", "Paddlefish", "Flathead Catfish"],
+    "Florida": ["Largemouth Bass", "Snook", "Red Drum (Redfish)", "Spotted Seatrout", "Tarpon", "Mangrove Snapper", "Gag Grouper", "Sailfish", "Spanish Mackerel", "Bluegill"],
+    "Texas": ["Largemouth Bass", "Red Drum", "Alligator Gar", "Channel Catfish", "White Bass", "Speckled Trout", "Crappie", "Flounder", "Striped Bass", "BlueCatfish"],
+    "California": ["Rainbow Trout", "California Golden Trout", "Largemouth Bass", "Chinook Salmon", "Striped Bass", "Calico Bass", "Lingcod", "Halibut", "Sturgeon", "Bluegill"],
+    "Michigan": ["Walleye", "Yellow Perch", "Smallmouth Bass", "Brook Trout", "Lake Trout", "Northern Pike", "Muskellunge", "Chinook Salmon", "Steelhead", "Bluegill"],
+    "Wisconsin": ["Walleye", "Muskellunge", "Northern Pike", "Yellow Perch", "Smallmouth Bass", "Largemouth Bass", "Crappie", "Bluegill", "Lake Trout", "Channel Catfish"],
+    "Minnesota": ["Walleye", "Northern Pike", "Largemouth Bass", "Smallmouth Bass", "Crappie", "Bluegill", "Yellow Perch", "Lake Trout", "Muskellunge", "Sauger"],
+    "New York": ["Striped Bass", "Largemouth Bass", "Smallmouth Bass", "Walleye", "Lake Trout", "Atlantic Salmon", "Yellow Perch", "Bluefish", "Summer Flounder", "Black Sea Bass"],
+    "North Carolina": ["Red Drum", "Largemouth Bass", "Bluefish", "Speckled Trout", "Striped Bass", "Flounder", "Channel Catfish", "Yellow Perch", "Crappie", "Spanish Mackerel"],
+    "Alabama": ["Largemouth Bass", "Spotted Bass", "Crappie", "Bluegill", "Channel Catfish", "Red Drum", "Speckled Trout", "Cobia", "King Mackerel", "Red Snapper"],
+    "General US": ["Largemouth Bass", "Bluegill", "Channel Catfish", "Crappie", "Rainbow Trout", "Yellow Perch", "Smallmouth Bass", "Common Carp", "Striped Bass", "Bullhead"]
 }
 
-# Welcome Menu
-if st.session_state.page == 'menu':
-    apply_custom_styling()
-    
-    # Title
-    st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Select a process to start the financial comparison.</p>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+baits = ["Nightcrawlers", "Spinnerbaits", "Plastic Worms", "Crankbaits", "Live Shrimp", "Spoons", "Corn", "Topwater Plugs", "Jigs"]
 
-    # Buttons
-    st.markdown('<div class="menu-btn-container">', unsafe_allow_html=True)
-    
-    # Forming Button
-    if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
-        st.session_state.page = 'calculator'
-        st.session_state.calc_type = 'Forming'
+# REMOVED: "Catch on your first cast" challenges
+templates = [
+    "Catch a {species} using {bait}",
+    "Catch 3 different fish within 60 minutes",
+    "Catch a {species} larger than {size} inches",
+    "Catch any fish using a topwater lure",
+    "Land a fish without using a net",
+    "Catch a {species} while standing on one leg for the last 10 seconds of the fight",
+    "Catch a fish using a lure that has the color 'Red' on it",
+    "Successfully release a {species} after taking a quick 'Trophy Photo'"
+]
+
+def get_new_challenge(state_name):
+    template = random.choice(templates)
+    # Fallback to General US if state isn't in our top 10 list
+    species_list = state_fish_map.get(state_name, state_fish_map["General US"])
+    species = random.choice(species_list)
+    bait = random.choice(baits)
+    size = random.randint(10, 25)
+    return template.format(species=species, bait=bait, size=size)
+
+# --- SIDEBAR: SETTINGS ---
+st.sidebar.title("🎣 Master Settings")
+
+# 1. State Selection
+selected_state = st.sidebar.selectbox("Select your State", sorted(list(state_fish_map.keys())))
+
+# 2. Environment Selection
+mode = st.sidebar.radio("Environment", ["Freshwater", "Saltwater"])
+
+if mode == "Freshwater":
+    location = st.sidebar.selectbox("Specific Setting", ["Lake", "Pond", "River", "Anywhere"])
+else:
+    location = st.sidebar.selectbox("Specific Setting", ["Bay", "Open Ocean"])
+
+if st.sidebar.button("Reset All Progress"):
+    st.session_state.challenge = None
+    st.session_state.trophies = []
+    st.rerun()
+
+# --- MAIN APP INTERFACE ---
+st.title("Fun Fishing Frenzy")
+st.write(f"Location: **{location}** in **{selected_state}**")
+
+# Success Celebration
+if st.session_state.show_success:
+    st.success("CHALLENGE COMPLETE!", icon="✅")
+    st.balloons()
+    st.session_state.show_success = False
+
+# Challenge Logic
+if st.session_state.challenge is None:
+    if st.button("Generate My First Challenge"):
+        st.session_state.challenge = get_new_challenge(selected_state)
         st.rerun()
-        
-    st.markdown("<br>", unsafe_allow_html=True)
+else:
+    st.info(f"### {st.session_state.challenge}")
     
-    # Subtractive Button
-    if st.button("⚙️\n\nSUBTRACTIVE CALCULATOR", use_container_width=True):
-        st.session_state.page = 'calculator'
-        st.session_state.calc_type = 'Subtractive'
-        st.rerun()
-        
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("---")
-
-    # INSERT IMAGE SLIDER CAROSUEL HERE
-
-# Calculator
-elif st.session_state.page == 'calculator':
-    apply_custom_styling() 
+    col1, col2 = st.columns(2)
     
-    if 'calc_type' not in st.session_state:
-        st.session_state.calc_type = 'Forming'
-    
-    calc_mode = st.session_state.calc_type
-    
-    if st.button("← Back to Menu"):
-        st.session_state.page = 'menu'
-        st.rerun()
-
-    st.title(f"{calc_mode} Lubricant Cost Comparison")
-    st.markdown(f"Projected Savings using **Consultant Lubricants Technology**.")
-
-    # User Input
-    with st.container():
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Process Productivity")
-
-                    # Subtractive Calculator Input
-            if calc_mode == 'Subtractive':
-                avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=300.0, key="sub_tool_avg")
-                tool_changes = st.number_input("Annual Tool Changes (#)", value=150, key="sub_t_changes")
-                primary_val = avg_tool_cost * tool_changes
-                st.caption(f"Calculated Annual Tool Spend: **${primary_val:,.2f}**")
-                
-                scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=5.0, step=0.1, key="sub_scrap_pct") / 100
-                
-                # Hidden variables for math consistency
-                die_change_total = 0
+    with col1:
+        if st.button("✅ I Did It!"):
+            st.session_state.trophies.append(f"{selected_state} ({location}): {st.session_state.challenge}")
+            st.session_state.challenge = get_new_challenge(selected_state)
+            st.session_state.show_success = True
+            st.rerun()
             
-            else: # Forming Calculator Input
-                primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
-                
-                # Fields For Forming
-                annual_die_changes = st.number_input("Annual Die Changes (#)", value=24, key="form_die_changes")
-                cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=200, key="form_cost_per_die")
-                
-                die_change_total = annual_die_changes * cost_per_die_change
-                st.caption(f"Calculated Annual Changeover Cost: **${die_change_total:,.2f}**")
-                
-                scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=3.0, step=0.1, key="form_scrap_pct") / 100
-                
-                # Hidden variables for math consistency
-                tool_changes = 0
+    with col2:
+        if st.button("⏭️ Skip Challenge"):
+            st.session_state.challenge = get_new_challenge(selected_state)
+            st.rerun()
 
-               # Fields for Subtractive
-        with col2:
-            st.subheader("Maintenance & Fluid Costs")
-            fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Sump Fill ($)"
-            
-            fill_cost = st.number_input(fill_label, value=1000, key=f"{calc_mode}_fill_val")
-            fill_frequency = st.number_input("Fills Per Year (#)", value=6, key=f"{calc_mode}_freq_val")
-            
-            monthly_adds = st.number_input("Monthly Additives Cost ($)", value=300, key=f"{calc_mode}_adds_val")
-            annual_additives = monthly_adds * 12
-            disposal_annual = st.number_input("Annual Disposal Fees ($)", value=1500.0, key=f"{calc_mode}_disp_val")
-
-    # Calculation Logic
-    current_fills_total = fill_cost * fill_frequency
-    
-    if calc_mode == 'Subtractive':
-        base_annual_cost = primary_val + (tool_changes) + current_fills_total + annual_additives + disposal_annual
-        scrap_burden = base_annual_cost * scrap_rate_pct
-        
-        s_tooling = primary_val * 0.25      
-        s_labor = (tool_changes) * 0.25 
-        s_fills = current_fills_total * 0.50 
-        s_adds = annual_additives * 0.80    
-        s_scrap = scrap_burden * 0.30       
-        total_savings = s_tooling + s_labor + s_fills + s_adds + s_scrap
-        
-    else: # FORMING
-        # Adding the Die Change Total to the Base Cost
-        base_annual_cost = primary_val + die_change_total + current_fills_total + annual_additives + disposal_annual
-        scrap_burden = base_annual_cost * scrap_rate_pct
-        
-        # Savings Estimates
-        s_die_life = primary_val * 0.30     
-        s_die_change = die_change_total * 0.30  # Assuming 30% fewer changeovers due to better lubrication
-        s_fills = current_fills_total * 0.40 
-        s_adds = annual_additives * 0.70    
-        s_scrap = scrap_burden * 0.20       
-        
-        total_savings = s_die_life + s_die_change + s_fills + s_adds + s_scrap
-
-    current_annual_burden = base_annual_cost + scrap_burden
-    projected_annual_burden = current_annual_burden - total_savings
-
-    # Estimate Dashboard
-    st.markdown("---")
-    d1, d2 = st.columns(2)
-    with d1:
-        st.markdown(f"""
-            <div style="background: rgba(0, 181, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #00b5ad; text-align: center;">
-                <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Total Estimated Annual Savings</p>
-                <h1 style="color: #00b5ad; margin: 10px 0;">${total_savings:,.2f}</h1>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with d2:
-        # ROI calculated against the "Fluid & Additive" spend
-        fluid_investment = current_fills_total + annual_additives
-        roi = (total_savings / (fluid_investment if fluid_investment > 0 else 1) * 100)
-        st.markdown(f"""
-            <div style="background: rgba(142, 68, 173, 0.1); padding: 25px; border-radius: 12px; border: 2px solid #8e44ad; text-align: center;">
-                <p style="color: #ffffff !important; margin: 0; font-weight: bold;">Projected ROI</p>
-                <h1 style="color: #8e44ad; margin: 10px 0;">{roi:.1f}%</h1>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # Graph
-    st.markdown("### Cumulative 12-Month Cost Comparison")
-    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    projected_annual_burden = current_annual_burden - total_savings
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=months, y=[(current_annual_burden/12)*i for i in range(1,13)], 
-                             name="Current Process (incl. Scrap)", line=dict(color='#8e44ad', width=4, dash='dot')))
-    fig.add_trace(go.Scatter(x=months, y=[(projected_annual_burden/12)*i for i in range(1,13)], 
-                             name="Consultant Lubricants", line=dict(color='#00b5ad', width=5), 
-                             fill='tonexty', fillcolor='rgba(0, 181, 173, 0.1)'))
-    
-    fig.update_layout(
-        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        height=450, margin=dict(l=20, r=20, t=50, b=20), font=dict(color="#ffffff"),
-        yaxis=dict(tickfont=dict(color="#ffffff"), title="Cumulative Spend ($)", showgrid=True, gridcolor="#30363d"),
-        xaxis=dict(tickfont=dict(color="#ffffff"), showgrid=False),
-        legend=dict(font=dict(color="#ffffff"), orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-# Footer
-st.markdown("---")
-st.caption("Consultant Lubricants, Inc. | 9 Research Park Dr. St. Peters, MO 63376 | 636-926-9903")
-st.markdown("---")
-st.caption("PROPRIETARY & CONFIDENTIAL: © 2026 Consultant Lubricants, Inc.")
+# --- TROPHY ROOM ---
+st.divider()
+st.subheader("🏆 Your Trophy Room")
+if st.session_state.trophies:
+    for t in reversed(st.session_state.trophies):
+        st.write(f"- {t}")
+else:
+    st.write("Your trophy wall is empty. Go catch something!")
