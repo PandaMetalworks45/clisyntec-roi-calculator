@@ -6,9 +6,12 @@ import base64
 import numpy as np
 
 def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return None
 
 # Branding and Browser
 st.set_page_config(
@@ -33,6 +36,19 @@ def apply_custom_styling():
         background-color: #161b22 !important;
         border-right: 1px solid #30363d;
     }
+    /* Fixed Button Styling: Deep Black text on Teal Background */
+    .stButton>button, .stLinkButton>a {
+        background-color: #00b5ad !important;
+        color: #000000 !important; 
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: bold !important;
+        text-decoration: none !important;
+    }
+    .stButton>button:hover, .stLinkButton>a:hover {
+        background-color: #8e44ad !important;
+        color: #ffffff !important; 
+    }
     /* Input Box Styling */
     div[data-baseweb="input"], [data-testid="stNumberInput"] input {
         background-color: #161b22 !important;
@@ -42,12 +58,27 @@ def apply_custom_styling():
     </style>
     """, unsafe_allow_html=True)
 
+# Plotly Config: Only allow PNG download
+CHART_CONFIG = {
+    'displayModeBar': True,
+    'modeBarButtonsToRemove': [
+        'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 
+        'zoomOut2d', 'autoScale2d', 'resetScale2d', 'hoverClosestCartesian', 
+        'hoverCompareCartesian', 'toggleSpikelines'
+    ],
+    'displaylogo': False
+}
+
+# Session State
+if 'page' not in st.session_state:
+    st.session_state.page = 'menu'
+
 # Sidebar
 with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
-    if os.path.exists(image_path):
-        img_base64 = get_base64_of_bin_file(image_path)
-        st.markdown(f'<a href="/?nav=menu" target="_self"><img src="data:image/jpeg;base64,{img_base64}" style="width: 100%;"></a>', unsafe_allow_html=True)
+    img_b64 = get_base64_of_bin_file(image_path)
+    if img_b64:
+        st.markdown(f'<a href="/?nav=menu" target="_self"><img src="data:image/jpeg;base64,{img_b64}" style="width: 100%;"></a>', unsafe_allow_html=True)
     
     st.markdown("---")
     if st.button("MAIN MENU", use_container_width=True):
@@ -55,14 +86,11 @@ with st.sidebar:
         st.rerun()
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
-# Session State
-if 'page' not in st.session_state:
-    st.session_state.page = 'menu'
-
 # Menu
 if st.session_state.page == 'menu':
     apply_custom_styling()
     st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
         st.rerun()
@@ -101,10 +129,9 @@ elif st.session_state.page == 'calculator':
     scrap_burden = base_cost * scrap_rate
     current_total = base_cost + scrap_burden
 
-    # Savings Logic
     s_maint = die_maint * 0.30
     s_labor = changeover_total * 0.20
-    s_fluid = (fill_cost * fills_per_year) * 0.40 # Reducing fills by 40%
+    s_fluid = (fill_cost * fills_per_year) * 0.40 
     s_adds = (monthly_adds * 12) * 0.50
     s_scrap = scrap_burden * 0.25
     
@@ -118,8 +145,6 @@ elif st.session_state.page == 'calculator':
     m2.metric("Projected Savings", f"${total_savings:,.0f}", delta=f"{ (total_savings/current_total)*100:.1f}%", delta_color="normal")
     m3.metric("Projected ROI", f"{(total_savings/(fluid_annual if fluid_annual > 0 else 1))*100:.0f}%")
 
-    # --- VISUALIZATIONS ---
-    
     # 1. WATERFALL CHART
     st.markdown("### Cost Reduction Breakdown")
     fig_water = go.Figure(go.Waterfall(
@@ -135,57 +160,30 @@ elif st.session_state.page == 'calculator':
         totals = {"marker":{"color":"#00b5ad"}}
     ))
     fig_water.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig_water, use_container_width=True)
+    st.plotly_chart(fig_water, use_container_width=True, config=CHART_CONFIG)
 
     c1, c2 = st.columns(2)
 
     with c1:
-        # 2. DONUT CHART (Scrap vs Yield)
+        # 2. DONUT CHART
         st.markdown("### Process Yield Improvement")
-        # Comparing current vs projected yield
-        labels = ['Good Parts (Yield)', 'Scrap/Waste']
-        # Current
-        fig_donut = go.Figure(data=[go.Pie(labels=labels, values=[1-scrap_rate, scrap_rate], hole=.6, marker_colors=['#00b5ad', '#30363d'])])
+        fig_donut = go.Figure(data=[go.Pie(labels=['Yield', 'Scrap'], values=[1-scrap_rate, scrap_rate], hole=.6, marker_colors=['#00b5ad', '#30363d'])])
         fig_donut.update_layout(title_text="Current Process Yield", template="plotly_dark", showlegend=False, paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig_donut, use_container_width=True)
+        st.plotly_chart(fig_donut, use_container_width=True, config=CHART_CONFIG)
 
     with c2:
-        # 3. SUMP LIFE GANTT (Stability Timeline)
+        # 3. SUMP LIFE GANTT
         st.markdown("### Sump Stability Timeline (12 Months)")
-        
-        # Calculate months between changes based on user input
         months_between = 12 / fills_per_year
-        # We estimate Consultant Lubricants doubles sump life or at least extends it significantly
         projected_fills = max(1, int(fills_per_year * 0.6)) 
-        
         fig_gantt = go.Figure()
         
-        # Current Process timeline
         for i in range(int(fills_per_year)):
-            start = i * months_between
-            fig_gantt.add_trace(go.Bar(
-                x=[months_between - 0.1], y=["Current Process "],
-                base=start, orientation='h', marker_color='#8e44ad', showlegend=False,
-                text="Cleanout", textposition='inside'
-            ))
-            
-        # Consultant Lubricants timeline
-        proj_months = 12 / projected_fills
-        for i in range(projected_fills):
-            start = i * proj_months
-            fig_gantt.add_trace(go.Bar(
-                x=[proj_months - 0.1], y=["Consultant Lubricants "],
-                base=start, orientation='h', marker_color='#00b5ad', showlegend=False,
-                text="Stable", textposition='inside'
-            ))
+            fig_gantt.add_trace(go.Bar(x=[months_between - 0.1], y=["Current "], base=i*months_between, orientation='h', marker_color='#8e44ad', showlegend=False, text="Cleanout", textposition='inside'))
+            fig_gantt.add_trace(go.Bar(x=[months_between - 0.1], y=["Current "], base=i*months_between, orientation='h', marker_color='#8e44ad', showlegend=False, text="Cleanout", textposition='inside'))
 
-        fig_gantt.update_layout(
-            template="plotly_dark", barmode='stack', 
-            xaxis=dict(title="Months", tickvals=list(range(13))),
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            height=300
-        )
-        st.plotly_chart(fig_gantt, use_container_width=True)
+        fig_gantt.update_layout(template="plotly_dark", barmode='stack', xaxis=dict(title="Months", tickvals=list(range(13))), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
+        st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
 
 st.markdown("---")
 st.caption("Proprietary Financial Modeling | © 2026 Consultant Lubricants, Inc.")
