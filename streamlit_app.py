@@ -26,7 +26,6 @@ def apply_custom_styling():
         color: #ffffff !important;
     }
 
-    /* h1-h6,p,label, .stmarkdown Styling */
     h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, [data-testid="stMetricLabel"] {
         color: #ffffff !important;
     }
@@ -37,8 +36,7 @@ def apply_custom_styling():
 
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #161b22 !important; /* Solid Dark Grey/Black */
-        background-image: none !important;    /* Removes the previous gradient */
+        background-color: #161b22 !important;
         border-right: 1px solid #30363d;
         opacity: 1 !important;
     }
@@ -62,8 +60,8 @@ def apply_custom_styling():
     .menu-btn-container .stButton>button {
         height: 200px !important;
         width: 100% !important;
-        max-width: 600px !important; /* Prevents it from stretching too far on wide screens */
-        margin: 10px auto !important; /* Centers and adds spacing between them */
+        max-width: 600px !important;
+        margin: 10px auto !important;
         display: block !important;
         font-size: 28px !important;
         border: 2px solid #00b5ad !important;
@@ -118,11 +116,7 @@ with st.sidebar:
     image_path = "CLI_Cap_Label2.jpg"
     
     if os.path.exists(image_path):
-        # This converts image to clickable HTML
         img_base64 = get_base64_of_bin_file(image_path)
-        
-        # WE CREATE AN HTML BUTTON THAT LOOKS LIKE THE IMAGE
-        # When clicked, it refreshes the page with the query param 'reset'
         html_code = f'''
             <a href="/?nav=menu" target="_self" style="text-decoration: none;">
                 <img src="data:image/jpeg;base64,{img_base64}" style="width: 100%; cursor: pointer;">
@@ -130,11 +124,9 @@ with st.sidebar:
         '''
         st.markdown(html_code, unsafe_allow_html=True)
         
-        # Check if the URL tells us to go home
         params = st.query_params
         if params.get("nav") == "menu":
             st.session_state.page = 'menu'
-            # Clear params so it doesn't loop
             st.query_params.clear()
             st.rerun()
     else:
@@ -143,10 +135,8 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
     st.link_button("View Products", "https://consultantlubricants.com/store", use_container_width=True)
-    
     st.markdown("---")
     st.caption("Consultant Lubricants, Inc.")
     st.caption("9 Research Park Dr.")
@@ -157,133 +147,71 @@ with st.sidebar:
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
 
-SAVINGS_RATES = {
-    "die_coating": 0.30, "volume": 0.50, "scrap": 0.30,
-    "maint_cost": 0.30, "labor": 0.30, "disposal": 0.30
-}
-
 # Welcome Menu
 if st.session_state.page == 'menu':
     apply_custom_styling()
     
-    # Title
     st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Select a process to start the financial comparison.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Select the process below to start your financial comparison.</p>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Buttons
     st.markdown('<div class="menu-btn-container">', unsafe_allow_html=True)
     
-    # Forming Button
     if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
-        st.session_state.calc_type = 'Forming'
-        st.rerun()
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Subtractive Button
-    if st.button("⚙️\n\nSUBTRACTIVE CALCULATOR", use_container_width=True):
-        st.session_state.page = 'calculator'
-        st.session_state.calc_type = 'Subtractive'
         st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("---")
-
-    # INSERT IMAGE SLIDER CAROSUEL HERE
 
 # Calculator
 elif st.session_state.page == 'calculator':
     apply_custom_styling() 
     
-    if 'calc_type' not in st.session_state:
-        st.session_state.calc_type = 'Forming'
-    
-    calc_mode = st.session_state.calc_type
-    
     if st.button("← Back to Menu"):
         st.session_state.page = 'menu'
         st.rerun()
 
-    st.title(f"{calc_mode} Lubricant Cost Comparison")
-    st.markdown(f"Projected Savings using **Consultant Lubricants Technology**.")
+    st.title("Forming Lubricant Cost Comparison")
+    st.markdown("Projected Savings using **Consultant Lubricants Technology**.")
 
     # User Input
     with st.container():
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Process Productivity")
-
-                    # Subtractive Calculator Input
-            if calc_mode == 'Subtractive':
-                avg_tool_cost = st.number_input("Average Tool Replacement Cost ($)", value=300.0, key="sub_tool_avg")
-                tool_changes = st.number_input("Annual Tool Changes (#)", value=150, key="sub_t_changes")
-                primary_val = avg_tool_cost * tool_changes
-                st.caption(f"Calculated Annual Tool Spend: **${primary_val:,.2f}**")
-                
-                scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=5.0, step=0.1, key="sub_scrap_pct") / 100
-                
-                # Hidden variables for math consistency
-                die_change_total = 0
+            primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
+            annual_die_changes = st.number_input("Annual Die Changes (#)", value=24, key="form_die_changes")
+            cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=200, key="form_cost_per_die")
             
-            else: # Forming Calculator Input
-                primary_val = st.number_input("Annual Die Coating/Polishing Costs ($)", value=5000.0, key="form_die_costs")
-                
-                # Fields For Forming
-                annual_die_changes = st.number_input("Annual Die Changes (#)", value=24, key="form_die_changes")
-                cost_per_die_change = st.number_input("Cost Per Die Change (Labor/Downtime) ($)", value=200, key="form_cost_per_die")
-                
-                die_change_total = annual_die_changes * cost_per_die_change
-                st.caption(f"Calculated Annual Changeover Cost: **${die_change_total:,.2f}**")
-                
-                scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=3.0, step=0.1, key="form_scrap_pct") / 100
-                
-                # Hidden variables for math consistency
-                tool_changes = 0
-
-               # Fields for Subtractive
+            die_change_total = annual_die_changes * cost_per_die_change
+            st.caption(f"Calculated Annual Changeover Cost: **${die_change_total:,.2f}**")
+            
+            scrap_rate_pct = st.number_input("Current Scrap Rate (%)", value=3.0, step=0.1, key="form_scrap_pct") / 100
+            
         with col2:
             st.subheader("Maintenance & Fluid Costs")
-            fill_label = "Cost per Sump Fill ($)" if calc_mode == 'Subtractive' else "Cost per Sump Fill ($)"
+            fill_cost = st.number_input("Cost per Sump Fill ($)", value=1000, key="form_fill_val")
+            fill_frequency = st.number_input("Fills Per Year (#)", value=6, key="form_freq_val")
             
-            fill_cost = st.number_input(fill_label, value=1000, key=f"{calc_mode}_fill_val")
-            fill_frequency = st.number_input("Fills Per Year (#)", value=6, key=f"{calc_mode}_freq_val")
-            
-            monthly_adds = st.number_input("Monthly Additives Cost ($)", value=300, key=f"{calc_mode}_adds_val")
+            monthly_adds = st.number_input("Monthly Additives Cost ($)", value=300, key="form_adds_val")
             annual_additives = monthly_adds * 12
-            disposal_annual = st.number_input("Annual Disposal Fees ($)", value=1500.0, key=f"{calc_mode}_disp_val")
+            dis_annual = st.number_input("Annual Disposal Fees ($)", value=1500.0, key="form_disp_val")
 
     # Calculation Logic
     current_fills_total = fill_cost * fill_frequency
+    base_annual_cost = primary_val + die_change_total + current_fills_total + annual_additives + dis_annual
+    scrap_burden = base_annual_cost * scrap_rate_pct
     
-    if calc_mode == 'Subtractive':
-        base_annual_cost = primary_val + (tool_changes) + current_fills_total + annual_additives + disposal_annual
-        scrap_burden = base_annual_cost * scrap_rate_pct
-        
-        s_tooling = primary_val * 0.25      
-        s_labor = (tool_changes) * 0.25 
-        s_fills = current_fills_total * 0.50 
-        s_adds = annual_additives * 0.80    
-        s_scrap = scrap_burden * 0.30       
-        total_savings = s_tooling + s_labor + s_fills + s_adds + s_scrap
-        
-    else: # FORMING
-        # Adding the Die Change Total to the Base Cost
-        base_annual_cost = primary_val + die_change_total + current_fills_total + annual_additives + disposal_annual
-        scrap_burden = base_annual_cost * scrap_rate_pct
-        
-        # Savings Estimates
-        s_die_life = primary_val * 0.30     
-        s_die_change = die_change_total * 0.30  # Assuming 30% fewer changeovers due to better lubrication
-        s_fills = current_fills_total * 0.40 
-        s_adds = annual_additives * 0.70    
-        s_scrap = scrap_burden * 0.20       
-        
-        total_savings = s_die_life + s_die_change + s_fills + s_adds + s_scrap
-
+    # Savings Estimates (Forming Logic)
+    s_die_life = primary_val * 0.30     
+    s_die_change = die_change_total * 0.30 
+    s_fills = current_fills_total * 0.40 
+    s_adds = annual_additives * 0.70     
+    s_scrap = scrap_burden * 0.20       
+    
+    total_savings = s_die_life + s_die_change + s_fills + s_adds + s_scrap
     current_annual_burden = base_annual_cost + scrap_burden
     projected_annual_burden = current_annual_burden - total_savings
 
@@ -299,7 +227,6 @@ elif st.session_state.page == 'calculator':
         """, unsafe_allow_html=True)
     
     with d2:
-        # ROI calculated against the "Fluid & Additive" spend
         fluid_investment = current_fills_total + annual_additives
         roi = (total_savings / (fluid_investment if fluid_investment > 0 else 1) * 100)
         st.markdown(f"""
@@ -312,7 +239,6 @@ elif st.session_state.page == 'calculator':
     # Graph
     st.markdown("### Cumulative 12-Month Cost Comparison")
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    projected_annual_burden = current_annual_burden - total_savings
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=months, y=[(current_annual_burden/12)*i for i in range(1,13)], 
