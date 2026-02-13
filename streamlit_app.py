@@ -36,7 +36,7 @@ def apply_custom_styling():
         background-color: #161b22 !important;
         border-right: 1px solid #30363d;
     }
-    /* Fixed Button Styling: Deep Black text on Teal Background */
+    /* Black text on Teal buttons for high contrast */
     .stButton>button, .stLinkButton>a {
         background-color: #00b5ad !important;
         color: #000000 !important; 
@@ -49,7 +49,6 @@ def apply_custom_styling():
         background-color: #8e44ad !important;
         color: #ffffff !important; 
     }
-    /* Input Box Styling */
     div[data-baseweb="input"], [data-testid="stNumberInput"] input {
         background-color: #161b22 !important;
         color: white !important;
@@ -58,7 +57,7 @@ def apply_custom_styling():
     </style>
     """, unsafe_allow_html=True)
 
-# Plotly Config: Only allow PNG download
+# Plotly Config: Remove all clutter, keep PNG export
 CHART_CONFIG = {
     'displayModeBar': True,
     'modeBarButtonsToRemove': [
@@ -69,7 +68,6 @@ CHART_CONFIG = {
     'displaylogo': False
 }
 
-# Session State
 if 'page' not in st.session_state:
     st.session_state.page = 'menu'
 
@@ -86,19 +84,17 @@ with st.sidebar:
         st.rerun()
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
-# Menu
+# Main App Logic
 if st.session_state.page == 'menu':
     apply_custom_styling()
     st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🏗️\n\nFORMING CALCULATOR", use_container_width=True):
+    if st.button("🏗️\n\nSTART FORMING CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
         st.rerun()
 
-# Calculator
 elif st.session_state.page == 'calculator':
     apply_custom_styling()
-    
     if st.button("← Back"):
         st.session_state.page = 'menu'
         st.rerun()
@@ -114,7 +110,6 @@ elif st.session_state.page == 'calculator':
             die_changes = st.number_input("Annual Die Changeovers (#)", value=24)
             change_cost = st.number_input("Labor/Downtime per Changeover ($)", value=250.0)
             scrap_rate = st.number_input("Current Scrap Rate (%)", value=4.0) / 100
-            
         with col2:
             st.subheader("Fluid Variables")
             fill_cost = st.number_input("Cost per Sump Fill ($)", value=1200.0)
@@ -122,36 +117,35 @@ elif st.session_state.page == 'calculator':
             monthly_adds = st.number_input("Monthly Additives ($)", value=200.0)
             disposal = st.number_input("Annual Disposal Fees ($)", value=2000.0)
 
-    # --- LOGIC ---
+    # --- MATH LOGIC ---
     changeover_total = die_changes * change_cost
     fluid_annual = (fill_cost * fills_per_year) + (monthly_adds * 12) + disposal
     base_cost = die_maint + changeover_total + fluid_annual
     scrap_burden = base_cost * scrap_rate
     current_total = base_cost + scrap_burden
 
+    # CLISYNTEC Projected Savings
     s_maint = die_maint * 0.30
     s_labor = changeover_total * 0.20
     s_fluid = (fill_cost * fills_per_year) * 0.40 
     s_adds = (monthly_adds * 12) * 0.50
     s_scrap = scrap_burden * 0.25
-    
     total_savings = s_maint + s_labor + s_fluid + s_adds + s_scrap
     projected_total = current_total - total_savings
 
-    # --- DASHBOARD ---
+    # --- METRICS ---
     st.markdown("---")
     m1, m2, m3 = st.columns(3)
     m1.metric("Current Annual Burden", f"${current_total:,.0f}")
-    m2.metric("Projected Savings", f"${total_savings:,.0f}", delta=f"{ (total_savings/current_total)*100:.1f}%", delta_color="normal")
+    m2.metric("Projected Savings", f"${total_savings:,.0f}", delta=f"{(total_savings/current_total)*100:.1f}%")
     m3.metric("Projected ROI", f"{(total_savings/(fluid_annual if fluid_annual > 0 else 1))*100:.0f}%")
 
-    # 1. WATERFALL CHART
-    st.markdown("### Cost Reduction Breakdown")
+    # --- WATERFALL CHART ---
+    st.markdown("### Financial Impact Breakdown")
     fig_water = go.Figure(go.Waterfall(
-        name = "Savings", orientation = "v",
+        orientation = "v",
         measure = ["absolute", "relative", "relative", "relative", "relative", "total"],
-        x = ["Current Cost", "Die Maint.", "Changeovers", "Fluid/Sump", "Scrap reduction", "New Total"],
-        textposition = "outside",
+        x = ["Current Total", "Die Life", "Changeovers", "Fluid/Sump", "Scrap", "Consultant Lubricants"],
         text = [f"${current_total:,.0f}", f"-${s_maint:,.0f}", f"-${s_labor:,.0f}", f"-${s_fluid+s_adds:,.0f}", f"-${s_scrap:,.0f}", f"${projected_total:,.0f}"],
         y = [current_total, -s_maint, -s_labor, -(s_fluid+s_adds), -s_scrap, projected_total],
         connector = {"line":{"color":"#30363d"}},
@@ -159,79 +153,43 @@ elif st.session_state.page == 'calculator':
         decreasing = {"marker":{"color":"#8e44ad"}},
         totals = {"marker":{"color":"#00b5ad"}}
     ))
-    fig_water.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig_water.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=500)
     st.plotly_chart(fig_water, use_container_width=True, config=CHART_CONFIG)
 
-   c1, c2 = st.columns(2)
+    # --- COMPARATIVE SECTION ---
+    st.markdown("---")
+    c1, c2 = st.columns(2)
 
-with c1:
-    # 2. COMPARATIVE PROCESS YIELD (Bar Chart)
-    st.markdown("### Yield: Current vs. Consultant Lubricants")
-    
-    # Calculate projected yield improvement
-    current_yield = (1 - scrap_rate) * 100
-    # Assuming Consultant Lubricants reduces scrap by 25% (as per s_scrap logic)
-    projected_scrap = scrap_rate * 0.75
-    projected_yield = (1 - projected_scrap) * 100
-
-    fig_yield = go.Figure()
-    fig_yield.add_trace(go.Bar(
-        x=['Current Process', 'Consultant Lubricants'],
-        y=[current_yield, projected_yield],
-        marker_color=['#30363d', '#00b5ad'],
-        text=[f"{current_yield:.1f}%", f"{projected_yield:.1f}%"],
-        textposition='auto',
-    ))
-
-    fig_yield.update_layout(
-        template="plotly_dark",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        yaxis=dict(title="Finished Part Yield (%)", range=[min(current_yield, projected_yield) - 5, 100]),
-        height=400,
-        margin=dict(t=20)
-    )
-    st.plotly_chart(fig_yield, use_container_width=True, config=CHART_CONFIG)
-
-with c2:
-    # 3. SUMP STABILITY COMPARISON (Gantt-style)
-    st.markdown("### Maintenance Frequency Reduction")
-    
-    # Logic: Current is based on user input, CL is 40% more stable
-    months_between_current = 12 / fills_per_year
-    projected_fills = max(1, int(fills_per_year * 0.6)) 
-    months_between_cl = 12 / projected_fills
-    
-    fig_gantt = go.Figure()
-    
-    # Current Process - Frequent interruptions
-    for i in range(int(fills_per_year)):
-        fig_gantt.add_trace(go.Bar(
-            x=[months_between_current - 0.1], y=["Current"],
-            base=i * months_between_current, orientation='h',
-            marker_color='#8e44ad', showlegend=False,
-            text="DUMP/FILL", textposition='inside'
-        ))
+    with c1:
+        st.markdown("### Yield: Current vs. Consultant Lubricants")
+        curr_yield = (1 - scrap_rate) * 100
+        proj_yield = (1 - (scrap_rate * 0.75)) * 100 # Showing 25% scrap reduction
         
-    # Consultant Lubricants - Extended stability
-    for i in range(projected_fills):
-        fig_gantt.add_trace(go.Bar(
-            x=[months_between_cl - 0.1], y=["CLISYNTEC"],
-            base=i * months_between_cl, orientation='h',
-            marker_color='#00b5ad', showlegend=False,
-            text="STABLE RUNTIME", textposition='inside'
+        fig_yield = go.Figure(go.Bar(
+            x=['Current Process', 'Consultant Lubricants'],
+            y=[curr_yield, proj_yield],
+            marker_color=['#30363d', '#00b5ad'],
+            text=[f"{curr_yield:.1f}%", f"{proj_yield:.1f}%"],
+            textposition='auto'
         ))
+        fig_yield.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                yaxis=dict(title="Yield (%)", range=[min(curr_yield, proj_yield)-2, 100]))
+        st.plotly_chart(fig_yield, use_container_width=True, config=CHART_CONFIG)
 
-    fig_gantt.update_layout(
-        template="plotly_dark",
-        barmode='stack',
-        xaxis=dict(title="12 Month Production Cycle", tickvals=list(range(13))),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        height=400,
-        margin=dict(t=20)
-    )
-    st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
+    with c2:
+        st.markdown("### Maintenance Frequency Reduction")
+        m_curr = 12 / fills_per_year
+        p_fills = max(1, int(fills_per_year * 0.6))
+        m_proj = 12 / p_fills
+        
+        fig_gantt = go.Figure()
+        for i in range(int(fills_per_year)):
+            fig_gantt.add_trace(go.Bar(x=[m_curr-0.1], y=["Current"], base=i*m_curr, orientation='h', marker_color='#8e44ad', showlegend=False, text="DUMP", textposition='inside'))
+        for i in range(p_fills):
+            fig_gantt.add_trace(go.Bar(x=[m_proj-0.1], y=["CLISYNTEC"], base=i*m_proj, orientation='h', marker_color='#00b5ad', showlegend=False, text="STABLE", textposition='inside'))
+            
+        fig_gantt.update_layout(template="plotly_dark", barmode='stack', xaxis=dict(title="Months"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
+        st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
 
 st.markdown("---")
 st.caption("Proprietary Financial Modeling | © 2026 Consultant Lubricants, Inc.")
