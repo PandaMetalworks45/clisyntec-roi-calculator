@@ -162,28 +162,76 @@ elif st.session_state.page == 'calculator':
     fig_water.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig_water, use_container_width=True, config=CHART_CONFIG)
 
-    c1, c2 = st.columns(2)
+   c1, c2 = st.columns(2)
 
-    with c1:
-        # 2. DONUT CHART
-        st.markdown("### Process Yield Improvement")
-        fig_donut = go.Figure(data=[go.Pie(labels=['Yield', 'Scrap'], values=[1-scrap_rate, scrap_rate], hole=.6, marker_colors=['#00b5ad', '#30363d'])])
-        fig_donut.update_layout(title_text="Current Process Yield", template="plotly_dark", showlegend=False, paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig_donut, use_container_width=True, config=CHART_CONFIG)
+with c1:
+    # 2. COMPARATIVE PROCESS YIELD (Bar Chart)
+    st.markdown("### Yield: Current vs. Consultant Lubricants")
+    
+    # Calculate projected yield improvement
+    current_yield = (1 - scrap_rate) * 100
+    # Assuming Consultant Lubricants reduces scrap by 25% (as per s_scrap logic)
+    projected_scrap = scrap_rate * 0.75
+    projected_yield = (1 - projected_scrap) * 100
 
-    with c2:
-        # 3. SUMP LIFE GANTT
-        st.markdown("### Sump Stability Timeline (12 Months)")
-        months_between = 12 / fills_per_year
-        projected_fills = max(1, int(fills_per_year * 0.6)) 
-        fig_gantt = go.Figure()
+    fig_yield = go.Figure()
+    fig_yield.add_trace(go.Bar(
+        x=['Current Process', 'Consultant Lubricants'],
+        y=[current_yield, projected_yield],
+        marker_color=['#30363d', '#00b5ad'],
+        text=[f"{current_yield:.1f}%", f"{projected_yield:.1f}%"],
+        textposition='auto',
+    ))
+
+    fig_yield.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        yaxis=dict(title="Finished Part Yield (%)", range=[min(current_yield, projected_yield) - 5, 100]),
+        height=400,
+        margin=dict(t=20)
+    )
+    st.plotly_chart(fig_yield, use_container_width=True, config=CHART_CONFIG)
+
+with c2:
+    # 3. SUMP STABILITY COMPARISON (Gantt-style)
+    st.markdown("### Maintenance Frequency Reduction")
+    
+    # Logic: Current is based on user input, CL is 40% more stable
+    months_between_current = 12 / fills_per_year
+    projected_fills = max(1, int(fills_per_year * 0.6)) 
+    months_between_cl = 12 / projected_fills
+    
+    fig_gantt = go.Figure()
+    
+    # Current Process - Frequent interruptions
+    for i in range(int(fills_per_year)):
+        fig_gantt.add_trace(go.Bar(
+            x=[months_between_current - 0.1], y=["Current"],
+            base=i * months_between_current, orientation='h',
+            marker_color='#8e44ad', showlegend=False,
+            text="DUMP/FILL", textposition='inside'
+        ))
         
-        for i in range(int(fills_per_year)):
-            fig_gantt.add_trace(go.Bar(x=[months_between - 0.1], y=["Current "], base=i*months_between, orientation='h', marker_color='#8e44ad', showlegend=False, text="Cleanout", textposition='inside'))
-            fig_gantt.add_trace(go.Bar(x=[months_between - 0.1], y=["Current "], base=i*months_between, orientation='h', marker_color='#8e44ad', showlegend=False, text="Cleanout", textposition='inside'))
+    # Consultant Lubricants - Extended stability
+    for i in range(projected_fills):
+        fig_gantt.add_trace(go.Bar(
+            x=[months_between_cl - 0.1], y=["CLISYNTEC"],
+            base=i * months_between_cl, orientation='h',
+            marker_color='#00b5ad', showlegend=False,
+            text="STABLE RUNTIME", textposition='inside'
+        ))
 
-        fig_gantt.update_layout(template="plotly_dark", barmode='stack', xaxis=dict(title="Months", tickvals=list(range(13))), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
-        st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
+    fig_gantt.update_layout(
+        template="plotly_dark",
+        barmode='stack',
+        xaxis=dict(title="12 Month Production Cycle", tickvals=list(range(13))),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=400,
+        margin=dict(t=20)
+    )
+    st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
 
 st.markdown("---")
 st.caption("Proprietary Financial Modeling | © 2026 Consultant Lubricants, Inc.")
