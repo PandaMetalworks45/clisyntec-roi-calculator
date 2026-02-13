@@ -54,10 +54,46 @@ def apply_custom_styling():
         color: white !important;
         border: 1px solid #30363d !important;
     }
+    
+    /* Carousel Styling */
+    .scroll-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding: 15px 5px;
+        scrollbar-width: thin;
+        scrollbar-color: #00b5ad #161b22;
+    }
+    .scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: #00b5ad;
+        border-radius: 10px;
+    }
+    .carousel-item {
+        min-width: 280px;
+        max-width: 280px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid #30363d;
+        transition: transform 0.3s ease, border-color 0.3s ease;
+        background: #161b22;
+    }
+    .carousel-item:hover {
+        transform: translateY(-8px);
+        border-color: #8e44ad;
+    }
+    .carousel-item img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        display: block;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# Plotly Config: Only allow PNG export
+# Plotly Config
 CHART_CONFIG = {
     'displayModeBar': True,
     'modeBarButtonsToRemove': [
@@ -88,14 +124,45 @@ with st.sidebar:
         st.rerun()
     st.link_button("Request a Sample", "https://surveyhero.com/c/consultantlubricants", use_container_width=True)
 
-# Main Navigation
+# --- PAGE LOGIC ---
+
 if st.session_state.page == 'menu':
     apply_custom_styling()
     st.markdown("<h1 style='text-align: center;'>Consultant Lubricant's TCO Calculator</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
+    
     if st.button("🏗️\n\nSTART FORMING CALCULATOR", use_container_width=True):
         st.session_state.page = 'calculator'
         st.rerun()
+
+    # --- NEW IMAGE CAROUSEL SECTION ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Configuration for Carousel (Update file names and links here)
+    carousel_data = [
+        {"img": "img1.jpg", "link": "https://www.consultantlubricants.com/products/forming"},
+        {"img": "img2.jpg", "link": "https://www.consultantlubricants.com/products/stamping"},
+        {"img": "img3.jpg", "link": "https://www.consultantlubricants.com/products/synthetic"},
+        {"img": "img4.jpg", "link": "https://www.consultantlubricants.com/about"},
+        {"img": "img5.jpg", "link": "https://www.consultantlubricants.com/contact"}
+    ]
+
+    carousel_html = '<div class="scroll-container">'
+    for item in carousel_data:
+        img_b64 = get_base64_of_bin_file(item["img"])
+        if img_b64:
+            carousel_html += f'''
+                <div class="carousel-item">
+                    <a href="{item["link"]}" target="_blank">
+                        <img src="data:image/jpeg;base64,{img_b64}">
+                    </a>
+                </div>
+            '''
+    carousel_html += '</div>'
+    
+    st.markdown(carousel_html, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    # --- END CAROUSEL ---
 
 elif st.session_state.page == 'calculator':
     apply_custom_styling()
@@ -129,7 +196,7 @@ elif st.session_state.page == 'calculator':
     scrap_burden = base_cost * scrap_rate
     current_total = base_cost + scrap_burden
 
-    # CLISYNTEC Projected Savings (30% maintenance, 20% labor, 40% fluid, 25% scrap)
+    # CLISYNTEC Projected Savings
     s_maint = die_maint * 0.30
     s_labor = changeover_total * 0.20
     s_fluid = (fill_cost * fills_per_year) * 0.40 
@@ -138,14 +205,11 @@ elif st.session_state.page == 'calculator':
     total_savings = s_maint + s_labor + s_fluid + s_adds + s_scrap
     projected_total = current_total - total_savings
 
-    # --- REVEAL BUTTON ---
-    st.markdown("<br>", unsafe_allow_html=True)
     if not st.session_state.show_results:
         if st.button("🚀 SHOW ME THE SAVINGS!", use_container_width=True):
             st.session_state.show_results = True
             st.rerun()
 
-    # --- HIDDEN RESULTS SECTION ---
     if st.session_state.show_results:
         st.markdown("---")
         m1, m2, m3 = st.columns(3)
@@ -153,7 +217,7 @@ elif st.session_state.page == 'calculator':
         m2.metric("Projected Savings", f"${total_savings:,.0f}", delta=f"{(total_savings/current_total)*100:.1f}%")
         m3.metric("Projected ROI", f"{(total_savings/(fluid_annual if fluid_annual > 0 else 1))*100:.0f}%")
 
-        # 1. WATERFALL CHART
+        # Waterfall Chart
         st.markdown("### Financial Impact Breakdown")
         fig_water = go.Figure(go.Waterfall(
             orientation = "v",
@@ -169,42 +233,10 @@ elif st.session_state.page == 'calculator':
         fig_water.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=500)
         st.plotly_chart(fig_water, use_container_width=True, config=CHART_CONFIG)
 
-        # 2. COMPARATIVE CHARTS
-        st.markdown("---")
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.markdown("### Yield: Current vs. Consultant Lubricants")
-            curr_yield = (1 - scrap_rate) * 100
-            proj_yield = (1 - (scrap_rate * 0.75)) * 100
-            fig_yield = go.Figure(go.Bar(
-                x=['Current Process', 'Consultant Lubricants'],
-                y=[curr_yield, proj_yield],
-                marker_color=['#30363d', '#00b5ad'],
-                text=[f"{curr_yield:.1f}%", f"{proj_yield:.1f}%"],
-                textposition='auto'
-            ))
-            fig_yield.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                    yaxis=dict(title="Yield (%)", range=[max(0, min(curr_yield, proj_yield)-5), 100]))
-            st.plotly_chart(fig_yield, use_container_width=True, config=CHART_CONFIG)
-
-        with c2:
-            st.markdown("### Maintenance Frequency Reduction")
-            m_curr = 12 / fills_per_year
-            p_fills = max(1, int(fills_per_year * 0.6))
-            m_proj = 12 / p_fills
-            fig_gantt = go.Figure()
-            for i in range(int(fills_per_year)):
-                fig_gantt.add_trace(go.Bar(x=[m_curr-0.1], y=["Current"], base=i*m_curr, orientation='h', marker_color='#8e44ad', showlegend=False, text="DUMP", textposition='inside'))
-            for i in range(p_fills):
-                fig_gantt.add_trace(go.Bar(x=[m_proj-0.1], y=["CLISYNTEC"], base=i*m_proj, orientation='h', marker_color='#00b5ad', showlegend=False, text="STABLE", textposition='inside'))
-            fig_gantt.update_layout(template="plotly_dark", barmode='stack', xaxis=dict(title="Months (1-Year Cycle)"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
-            st.plotly_chart(fig_gantt, use_container_width=True, config=CHART_CONFIG)
-
-        # RESET OPTION
         if st.button("Clear Results & Edit Inputs"):
             st.session_state.show_results = False
             st.rerun()
 
+# --- UNIVERSAL FOOTER ---
 st.markdown("---")
 st.caption("Proprietary Financial Modeling | © 2026 Consultant Lubricants, Inc.")
